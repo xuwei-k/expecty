@@ -3,7 +3,9 @@
 Expecty brings power assertions as known from [Groovy](http://groovy.codehaus.org) and [Spock](http://spockframework.org)
 to the [Scala](http://scala-lang.org) language. It is a micro library that aims to do one thing well.
 
-## License
+## License and Credits
+
+Expecty was originally written by Peter Niederwieser, author of Spock.
 
 Expecty is licensed under the Apache 2 license.
 
