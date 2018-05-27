@@ -1,5 +1,6 @@
-ThisBuild / organization := "org.expecty"
 ThisBuild / version := "0.11.0-SNAPSHOT"
+ThisBuild / scalaVersion := "2.12.6"
+ThisBuild / crossScalaVersions := Vector("2.12.6", "2.13.0-M4", "2.11.12", "2.10.6")
 
 lazy val expecty = (project in file("."))
   .settings(
