@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-package org.expecty
+package com.eed3si9n.expecty
 
 object compat {
   type Context = scala.reflect.macros.blackbox.Context

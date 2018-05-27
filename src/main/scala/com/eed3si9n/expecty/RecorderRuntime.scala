@@ -11,7 +11,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package org.expecty
+package com.eed3si9n.expecty
 
 // one instance per recording
 class RecorderRuntime(listener: RecorderListener[Boolean]) {

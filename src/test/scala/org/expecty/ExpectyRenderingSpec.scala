@@ -16,7 +16,7 @@ package foo
 import org.junit.Assert._
 import org.junit.Test
 import junit.framework.ComparisonFailure
-import org.expecty.Expecty
+import com.eed3si9n.expecty.Expecty
 
 class ExpectyRenderingSpec {
   val assert = new Expecty(printAsts = true)

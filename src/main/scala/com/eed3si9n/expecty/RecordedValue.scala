@@ -11,10 +11,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package org.expecty
+package com.eed3si9n.expecty
 
-trait RecorderListener[T] {
-  def valueRecorded(recordedValue: RecordedValue): Unit = {}
-  def expressionRecorded(recordedExpr: RecordedExpression[T]): Unit = {}
-  def recordingCompleted(recording: Recording[T]): Unit = {}
+case class RecordedValue(value: Any, anchor: Int) {
+
 }

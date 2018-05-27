@@ -14,7 +14,7 @@
 
 package foo
 
-import org.expecty.Expecty, Expecty.assert
+import com.eed3si9n.expecty.Expecty, Expecty.assert
 
 case class Person(name: String = "Fred", age: Int = 42) {
   def say(words: String*) = words.mkString(" ")

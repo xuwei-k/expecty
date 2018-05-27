@@ -11,11 +11,8 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package org.expecty
+package com.eed3si9n.expecty
 
-// might hold more information in the future (for example the kind of expression),
-// or might be turned into an expression tree
-case class RecordedExpression[T](text: String, ast: String, value: T, recordedValues: List[RecordedValue]) {
+case class Recording[T](value: T, recordedExprs: List[RecordedExpression[T]]) {
+
 }
-
-

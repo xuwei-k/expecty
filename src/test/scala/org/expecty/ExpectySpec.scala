@@ -14,7 +14,7 @@
 package foo
 
 import org.junit.Test
-import org.expecty.Expecty.assert
+import com.eed3si9n.expecty.Expecty.assert
 
 class ExpectySpec {
   val name = "Hi from Expecty!"

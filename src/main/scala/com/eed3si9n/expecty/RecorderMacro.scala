@@ -11,7 +11,7 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package org.expecty
+package com.eed3si9n.expecty
 
 import compat._
 import scala.util.Properties
@@ -27,7 +27,7 @@ class RecorderMacro[C <: Context](val context: C) {
     val runtimeClass = context.mirror.staticClass(classOf[RecorderRuntime].getName)
     ValDef(
       Modifiers(),
-      termName(context)("$org_expecty_recorderRuntime"),
+      termName(context)("$com_eed3si9n_expecty_recorderRuntime"),
       TypeTree(runtimeClass.toType),
       Apply(
         Select(
@@ -56,14 +56,14 @@ class RecorderMacro[C <: Context](val context: C) {
   private[this] def completeRecording: Tree =
     Apply(
       Select(
-        Ident(termName(context)("$org_expecty_recorderRuntime")),
+        Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")),
         termName(context)("completeRecording")),
       List())
 
   private[this] def resetValues: Tree =
     Apply(
       Select(
-        Ident(termName(context)("$org_expecty_recorderRuntime")),
+        Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")),
         termName(context)("resetValues")),
       List())
 
@@ -78,7 +78,7 @@ Instrumented AST: ${showRaw(instrumented)}")
 
     Apply(
       Select(
-        Ident(termName(context)("$org_expecty_recorderRuntime")),
+        Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")),
         termName(context)("recordExpression")),
       List(
         context.literal(text).tree,
@@ -111,7 +111,7 @@ Instrumented AST: ${showRaw(instrumented)}")
     if (origExpr.tpe.typeSymbol.isType)
       Apply(
         Select(
-          Ident(termName(context)("$org_expecty_recorderRuntime")),
+          Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")),
           termName(context)("recordValue")),
         List(expr, Literal(Constant(getAnchor(origExpr)))))
     else expr
