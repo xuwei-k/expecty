@@ -9,55 +9,10 @@ Expecty was originally written by Peter Niederwieser, author of Spock.
 
 Expecty is licensed under the Apache 2 license.
 
-## Latest Release
-
-Expecty 0.10 was released on November 12th, 2013. It requires Scala 2.10.0 or higher.
-
-## Download
-
-Get Expecty from its Maven repository at https://github.com/pniederw/expecty/tree/master/m2repo.
-
-For sbt builds:
+## Setup
 
 ```scala
-val expectyRepo = "Expecty Repository" at "https://raw.github.com/pniederw/expecty/master/m2repo/"
-val expecty = "org.expecty" % "expecty" % "0.10"
-```
-
-For Gradle builds:
-
-```groovy
-repositories {
-  // important: this repo has to come last
-  maven {
-    name "expecty"
-    url "https://raw.github.com/pniederw/expecty/master/m2repo/"
-  }
-}
-
-dependencies {
-  testCompile "org.expecty:expecty:0.10"
-}
-```
-
-For Maven builds:
-
-```xml
-<repositories>
-  <repository>
-    <id>expecty</id>
-    <url>https://raw.github.com/pniederw/expecty/master/m2repo/</url>
-  </repository>
-</repositories>
-
-<dependencies>
-  <dependency>
-    <groupId>org.expecty</groupId>
-    <artifactId>expecty</artifactId>
-    <version>0.10</version>
-    <scope>test</scope>
-  </dependency>
-</dependencies>
+libraryDependencies += "com.eed3si9n.expecty" %% "expecty" % "0.11.0" % Test
 ```
 
 ## Code Examples
