@@ -18,7 +18,7 @@ libraryDependencies += "com.eed3si9n.expecty" %% "expecty" % "0.11.0" % Test
 ## Code Examples
 
 ```scala
-import org.expecty.Expecty.assert
+import com.eed3si9n.expecty.Expecty.assert
 
 case class Person(name: String = "Fred", age: Int = 42) {
   def say(words: String*) = words.mkString(" ")
@@ -84,7 +84,7 @@ Person(Fred,42)
 
 ## Further Examples
 
-Have a look at [ExpectySpec.scala](https://github.com/pniederw/expecty/blob/master/src/test/scala/org/expecty/ExpectySpec.scala)
+Have a look at [ExpectySpec.scala](https://github.com/eed3si9n/expecty/blob/master/src/test/scala/org/expecty/ExpectySpec.scala)
 and other specs in the same directory.
 
 
