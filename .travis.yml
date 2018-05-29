@@ -4,18 +4,33 @@ group: stable
 language: scala
 jdk: oraclejdk8
 
+script: sbt ++${TRAVIS_SCALA_VERSION}! ${TEST_PROJECT}/test
+
+env:
+  matrix:
+    - TEST_PROJECT="expectyJVM"
+    - TEST_PROJECT="expectyJS"
+
 scala:
    - 2.10.7
    - 2.11.12
    - 2.12.6
-   - 2.13.0-M4
 
+matrix:
+  include:
+  - scala: 2.11.12
+    sudo: required
+    before_script:
+    - sudo chmod +x /usr/local/bin/sbt
+    before_install:
+    - sudo apt-get update
+    - curl https://raw.githubusercontent.com/scala-native/scala-native/master/scripts/travis_setup.sh | bash -x
+    script:
+    - sbt ++${TRAVIS_SCALA_VERSION}! expectyNative/test
 
 # Undo _JAVA_OPTIONS environment variable
 before_script:
   - _JAVA_OPTIONS=
-
-script: sbt ++$TRAVIS_SCALA_VERSION test
 
 cache:
   directories:
