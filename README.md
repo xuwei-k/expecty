@@ -11,8 +11,16 @@ Expecty is licensed under the Apache 2 license.
 
 ## Setup
 
+For Scala JVM:
+
 ```scala
 libraryDependencies += "com.eed3si9n.expecty" %% "expecty" % "0.11.0" % Test
+```
+
+For Scala.JS and Scala Native:
+
+```scala
+libraryDependencies += "com.eed3si9n.expecty" %%% "expecty" % "0.11.0" % Test
 ```
 
 ## Code Examples
@@ -84,8 +92,5 @@ Person(Fred,42)
 
 ## Further Examples
 
-Have a look at [ExpectySpec.scala](https://github.com/eed3si9n/expecty/blob/master/src/test/scala/org/expecty/ExpectySpec.scala)
-and other specs in the same directory.
-
-
- 
+Have a look at [ExpectySpec.scala](https://github.com/eed3si9n/expecty/blob/master/jvm/src/test/scala/org/expecty/ExpectySpec.scala),
+[ExpectyUtestSpec.scala](https://github.com/eed3si9n/expecty/blob/master/shared/src/test/scala/ExpectyUtestSpec.scala), and other specs in the same directory.
