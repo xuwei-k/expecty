@@ -21,7 +21,7 @@ lazy val expecty = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
       else Seq("-Yrangepos", "-feature", "-deprecation")
     },
     Compile / unmanagedSourceDirectories ++= {
-      if (scalaVersion.value startsWith "2.13") Seq(baseDirectory.value / "src" / "main" / "scala-2.13-beta")
+      if (scalaVersion.value startsWith "2.13") Seq((baseDirectory in LocalRootProject).value / "shared" / "src" / "main" / "scala-2.13-beta")
       else Nil
     },
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
