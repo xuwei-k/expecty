@@ -30,7 +30,7 @@ class ExpressionRenderer(showTypes: Boolean) {
     lines.mkString("\n")
   }
 
-  private[this] def filterAndSortByAnchor(recordedValues: List[RecordedValue]): Traversable[RecordedValue] = {
+  private[this] def filterAndSortByAnchor(recordedValues: List[RecordedValue]): Iterable[RecordedValue] = {
     var map = TreeMap[Int, RecordedValue]()(Ordering.by(-_))
     // values stemming from compiler generated code often have the same anchor as regular values
     // and get recorded before them; let's filter them out
