@@ -373,7 +373,7 @@ Some(23) |  Some(22)
 //  }
 
   def outputs(rendering: String)(expectation: => Boolean): Unit = {
-    def normalize(s: String) = s.trim().lines.mkString
+    def normalize(s: String) = augmentString(s.trim()).lines.mkString
 
     try {
       expectation
