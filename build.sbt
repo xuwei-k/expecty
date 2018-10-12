@@ -2,8 +2,8 @@
 import sbtcrossproject.{crossProject, CrossType}
 
 ThisBuild / version := "0.11.0-SNAPSHOT"
-ThisBuild / scalaVersion := "2.12.6"
-ThisBuild / crossScalaVersions := Vector("2.12.6", "2.13.0-M4", "2.11.12", "2.10.6")
+ThisBuild / scalaVersion := "2.12.7"
+ThisBuild / crossScalaVersions := Vector("2.12.7", "2.13.0-M5", "2.11.12", "2.10.6")
 
 lazy val root = (project in file("."))
   .aggregate(expectyJVM, expectyJS)
@@ -25,7 +25,7 @@ lazy val expecty = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
       else Nil
     },
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
-    libraryDependencies += "com.lihaoyi" %%% "utest" % "0.6.3" % Test,
+    libraryDependencies += "com.lihaoyi" %%% "utest" % "0.6.6" % Test,
     testFrameworks += new TestFramework("utest.runner.Framework"),
   )
   .jvmSettings(
