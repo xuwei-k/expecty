@@ -2,8 +2,8 @@
 import sbtcrossproject.{crossProject, CrossType}
 
 ThisBuild / version := "0.11.0-SNAPSHOT"
-ThisBuild / scalaVersion := "2.12.7"
-ThisBuild / crossScalaVersions := Vector("2.12.7", "2.13.0-M5", "2.11.12", "2.10.6")
+ThisBuild / scalaVersion := "2.12.8"
+ThisBuild / crossScalaVersions := Vector("2.12.8", "2.13.0-M5", "2.11.12", "2.10.7")
 
 lazy val root = (project in file("."))
   .aggregate(expectyJVM, expectyJS)
