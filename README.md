@@ -84,8 +84,5 @@ Person(Fred,42)
 
 ## Further Examples
 
-Have a look at [ExpectySpec.scala](https://github.com/eed3si9n/expecty/blob/master/src/test/scala/org/expecty/ExpectySpec.scala)
+Have a look at [ExpectySpec.scala](https://github.com/eed3si9n/expecty/blob/master/jvm/src/test/scala/org/expecty/ExpectySpec.scala)
 and other specs in the same directory.
-
-
- 
