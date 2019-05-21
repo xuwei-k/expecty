@@ -13,6 +13,7 @@
 */
 package foo
 
+/*
 import utest._
 
 object ExpectyUtestSpec extends TestSuite {
@@ -65,3 +66,4 @@ object ExpectyUtestSpec extends TestSuite {
     }
   }
 }
+*/
