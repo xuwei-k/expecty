@@ -1,8 +1,8 @@
-dist: trusty
+dist: xenial
 group: stable
 
 language: scala
-jdk: oraclejdk8
+jdk: openjdk8
 
 script: sbt ++${TRAVIS_SCALA_VERSION}! ${TEST_PROJECT}/test
 
