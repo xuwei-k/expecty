@@ -3,7 +3,7 @@ import sbtcrossproject.{crossProject, CrossType}
 
 ThisBuild / version := "0.11.0-SNAPSHOT"
 ThisBuild / scalaVersion := "2.12.8"
-ThisBuild / crossScalaVersions := Vector("2.12.8", "2.13.0", "2.11.12", "2.10.7")
+ThisBuild / crossScalaVersions := Vector("2.12.8", "2.13.0", "2.11.12", "2.10.7", "0.16.0-RC3")
 
 lazy val root = (project in file("."))
   .aggregate(expectyJVM, expectyJS)
@@ -27,10 +27,21 @@ lazy val expecty = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
       else Seq("-Yrangepos", "-feature", "-deprecation")
     },
     Compile / unmanagedSourceDirectories ++= {
-      if (scalaVersion.value startsWith "2.13") Seq((baseDirectory in LocalRootProject).value / "shared" / "src" / "main" / "scala-2.13-beta")
-      else Nil
+      (CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, 13)) =>
+          Seq((baseDirectory in LocalRootProject).value / "shared" / "src" / "main" / "scala-2.13-beta")
+        case _ => Nil
+      }) ++
+      (CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((2, _))          => Seq((baseDirectory in LocalRootProject).value / "shared" / "src" / "main" / "scala-2")
+        case Some((0, _) | (3, _)) => Seq((baseDirectory in LocalRootProject).value / "shared" / "src" / "main" / "scala-3")
+        case _ => Nil
+      })
     },
-    libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
+    libraryDependencies ++= (CrossVersion.partialVersion(scalaVersion.value) match {
+      case Some((2, _)) => Seq("org.scala-lang" % "scala-reflect" % scalaVersion.value)
+      case _ => Nil
+    }),
     testFrameworks += new TestFramework("utest.runner.Framework"),
   )
   .jvmSettings(
