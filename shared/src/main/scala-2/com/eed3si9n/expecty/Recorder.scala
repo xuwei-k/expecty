@@ -15,9 +15,8 @@ package com.eed3si9n.expecty
 
 import language.experimental.macros
 
-// should have two type parameters; one for recorded type, another for returned type
-// so far failed to implement the macro side of this
 abstract class Recorder {
   def listener: RecorderListener[Boolean]
-  def apply(recording: Boolean): Boolean = macro RecorderMacro.apply
+  def apply(recording: Boolean): Unit = macro RecorderMacro1.apply
+  def apply(recording: Boolean, message: => String): Unit = macro RecorderMacro.apply
 }

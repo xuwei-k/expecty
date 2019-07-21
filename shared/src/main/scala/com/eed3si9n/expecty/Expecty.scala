@@ -14,26 +14,25 @@
 
 package com.eed3si9n.expecty
 
-class Expecty(failEarly: Boolean = true, showTypes: Boolean = false,
-              printAsts: Boolean = false, printExprs: Boolean = false) extends Recorder {
-  class ExpectyListener extends RecorderListener[Boolean] {
-    override def expressionRecorded(recordedExpr: RecordedExpression[Boolean]): Unit = {
-      lazy val rendering: String = new ExpressionRenderer(showTypes).render(recordedExpr)
-      if (printAsts) println(recordedExpr.ast + "\n")
-      if (printExprs) println(rendering)
-      if (!recordedExpr.value && failEarly) {
-        throw new AssertionError("\n\n" + rendering)
-      }
-    }
+class Expecty extends Recorder {
+  val failEarly: Boolean = true
+  val showTypes: Boolean = false
+  // val printAsts: Boolean = false
+  // val printExprs: Boolean = false
 
-    override def recordingCompleted(recording: Recording[Boolean]): Unit = {
-      if (!failEarly) {
-        val failedExprs = recording.recordedExprs.filter(!_.value)
-        if (!failedExprs.isEmpty) {
-          val renderer = new ExpressionRenderer(showTypes)
-          val renderings = failedExprs.reverse.map(renderer.render(_))
-          throw new AssertionError("\n\n" + renderings.mkString("\n\n"))
-        }
+  class ExpectyListener extends RecorderListener[Boolean] {
+    override def expressionRecorded(
+        recordedExpr: RecordedExpression[Boolean], recordedMessage: Function0[String]): Unit = {
+      lazy val rendering: String = new ExpressionRenderer(showTypes).render(recordedExpr)
+      // if (printAsts) println(recordedExpr.ast + "\n")
+      // if (printExprs) println(rendering)
+      if (!recordedExpr.value && failEarly) {
+        val msg = recordedMessage()
+        val header =
+          "assertion failed" +
+            (if (msg == "") ""
+            else ": " + msg)
+        throw new AssertionError(header + "\n\n" + rendering)
       }
     }
   }

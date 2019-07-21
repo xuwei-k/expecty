@@ -19,8 +19,11 @@ import scala.util.Properties
 class RecorderMacro[C <: Context](val context: C) {
   import context.universe._
 
-  def apply(recording: Expr[Boolean]): Expr[Boolean] = {
-    context.Expr(Block(declareRuntime :: recordExpressions(recording.tree), completeRecording))
+  def apply(recording: context.Tree, message: context.Tree): Expr[Unit] = {
+    context.Expr(Block(declareRuntime ::
+      recordMessage(message) ::
+      recordExpressions(recording),
+      completeRecording))
   }
 
   private[this] def declareRuntime: Tree = {
@@ -52,6 +55,13 @@ class RecorderMacro[C <: Context](val context: C) {
       }
     }
   }
+
+  private[this] def recordMessage(message: Tree): Tree =
+    Apply(
+      Select(
+        Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")),
+        termName(context)("recordMessage")),
+      List(message))
 
   private[this] def completeRecording: Tree =
     Apply(
@@ -88,7 +98,7 @@ Instrumented AST: ${showRaw(instrumented)}")
 
   private[this] def splitExpressions(recording: Tree): List[Tree] = recording match {
     case Block(xs, y) => xs ::: List(y)
-    case _ => List(recording)
+    case _            => List(recording)
   }
 
   private[this] def recordAllValues(expr: Tree): Tree = expr match {
@@ -134,9 +144,14 @@ Instrumented AST: ${showRaw(instrumented)}")
   }
 }
 
-object RecorderMacro {
-  def apply(context: Context)(recording: context.Expr[Boolean]): context.Expr[Boolean] = {
-    new RecorderMacro[context.type](context).apply(recording)
+object RecorderMacro1 {
+  def apply(context: Context)(recording: context.Tree): context.Expr[Unit] = {
+    new RecorderMacro[context.type](context).apply(recording, context.literal("").tree)
   }
 }
 
+object RecorderMacro {
+  def apply(context: Context)(recording: context.Tree, message: context.Tree): context.Expr[Unit] = {
+    new RecorderMacro[context.type](context).apply(recording, message)
+  }
+}

@@ -22,6 +22,13 @@ object RecorderMacro {
   def apply(
       recording: Expr[Boolean],
       listener: Expr[RecorderListener[Boolean]])(implicit reflect: Reflection): Expr[Unit] = {
+    apply(recording, '{""}, listener)
+  }
+
+  def apply(
+      recording: Expr[Boolean],
+      message: Expr[String],
+      listener: Expr[RecorderListener[Boolean]])(implicit reflect: Reflection): Expr[Unit] = {
     import reflect._
     val termArg: Term = recording.unseal.underlyingArgument
 
@@ -38,6 +45,7 @@ object RecorderMacro {
 
     '{
       val recorderRuntime: RecorderRuntime = new RecorderRuntime($listener)
+      recorderRuntime.recordMessage($message)
       ${
         val runtimeSym = '[RecorderRuntime].unseal.symbol match {
           case IsClassDefSymbol(sym) => sym
