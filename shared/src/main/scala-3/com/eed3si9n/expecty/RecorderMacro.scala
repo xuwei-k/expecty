@@ -39,6 +39,18 @@ object RecorderMacro {
     '{
       val recorderRuntime: RecorderRuntime = new RecorderRuntime($listener)
       ${
+        val runtimeSym = '[RecorderRuntime].unseal.symbol match {
+          case IsClassDefSymbol(sym) => sym
+        }
+        val recordExpressionSel: Term = {
+          val m = runtimeSym.method("recordExpression").head
+          '{ recorderRuntime }.unseal.select(m)
+        }
+        val recordValueSel: Term = {
+          val m = runtimeSym.method("recordValue").head
+          '{ recorderRuntime }.unseal.select(m)
+        }
+
         def recordExpressions(recording: Term): List[Term] = {
           val exprs = splitExpressions(recording)
           exprs flatMap { expr =>
@@ -58,11 +70,12 @@ object RecorderMacro {
 
         def recordExpression(text: String, ast: String, expr: Term): Term = {
           val instrumented = recordAllValues(expr)
-          '{ recorderRuntime.recordExpression(
-               ${ Literal(Constant.String(text)).seal.asInstanceOf[Expr[String]] },
-               ${ Literal(Constant.String(ast)).seal.asInstanceOf[Expr[String]] },
-               ${ instrumented.seal.asInstanceOf[Expr[Boolean]] }
-            ) }.unseal
+          Apply(recordExpressionSel,
+            List(
+              Literal(Constant.String(text)),
+              Literal(Constant.String(ast)),
+              instrumented
+            ))
         }
 
         def recordAllValues(expr: Term): Term =
@@ -115,13 +128,7 @@ object RecorderMacro {
             case TypeApply(_, _) => expr
             case Ident(_) if skipIdent(expr.symbol) => expr
             case _ =>
-              val sym = '[RecorderRuntime].unseal.symbol match {
-                case IsClassDefSymbol(sym) => sym
-              }
-              val m = sym.method("recordValue").head
-              val tapply = '{ recorderRuntime }.unseal
-                .select(m)
-                .appliedToType(expr.tpe)
+              val tapply = recordValueSel.appliedToType(expr.tpe)
               Apply.copy(expr)(
                 tapply,
                 List(
