@@ -4,40 +4,30 @@ group: stable
 language: scala
 jdk: openjdk8
 
-script: sbt ++${TRAVIS_SCALA_VERSION}! ${TEST_PROJECT}/test
-
-env:
-  matrix:
-    - TEST_PROJECT="expectyJVM"
-    - TEST_PROJECT="expectyJS"
-
 scala:
-   - 2.10.7
-   - 2.11.12
-   - 2.12.8
-   - 2.13.0
+  - 2.10.7
+  - 2.11.12
+  - 2.12.8
+  - 2.13.0
 
 matrix:
   include:
-  - scala: 2.12.8
-    jdk: openjdk11
-    env: TEST_PROJECT="expectyJVM"
-  - scala: 0.16.0-RC3
-    jdk: openjdk8
-    env: TEST_PROJECT="expectyJVM"
-  - scala: 2.11.12
-    sudo: required
-    before_script:
-    - sudo chmod +x /usr/local/bin/sbt
-    before_install:
-    - sudo apt-get update
-    - curl https://raw.githubusercontent.com/scala-native/scala-native/master/scripts/travis_setup.sh | bash -x
-    script:
-    - sbt ++${TRAVIS_SCALA_VERSION}! expectyNative/test
+    - scala: 2.12.8
+      jdk: openjdk11
+    - scala: 0.16.0-RC3
+      jdk: openjdk8
+      script: sbt ++${TRAVIS_SCALA_VERSION}! expectyJVM/test
+    - scala: 2.11.12
+      sudo: required
+      before_script:
+        - sudo chmod +x /usr/local/bin/sbt
+      before_install:
+        - sudo apt-get update
+        - curl https://raw.githubusercontent.com/scala-native/scala-native/master/scripts/travis_setup.sh | bash -x
+      script:
+        - sbt ++${TRAVIS_SCALA_VERSION}! expectyNative/test
 
-# Undo _JAVA_OPTIONS environment variable
-before_script:
-  - _JAVA_OPTIONS=
+script: sbt ++${TRAVIS_SCALA_VERSION}! expectyJVM/test expectyJS/test
 
 cache:
   directories:
