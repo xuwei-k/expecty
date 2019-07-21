@@ -23,10 +23,18 @@ class ExpressionRenderer(showTypes: Boolean) {
     val lines = ListBuffer(new StringBuilder)
 
     val rightToLeft = filterAndSortByAnchor(recordedExpr.recordedValues)
-    for (recordedValue <- rightToLeft) placeValue(lines, recordedValue.value, recordedValue.anchor - offset)
+    for (recordedValue <- rightToLeft) placeValue(lines, recordedValue.value,
+      math.max(recordedValue.anchor - offset, 0))
 
     lines.prepend(intro)
     lines.append(new StringBuilder)
+
+    // debug
+    // recordedExpr.recordedValues foreach { v =>
+    //   val line = new StringBuilder()
+    //   line.append(v.toString)
+    //   lines.append(line)
+    // }
     lines.mkString("\n")
   }
 
@@ -34,7 +42,9 @@ class ExpressionRenderer(showTypes: Boolean) {
     var map = TreeMap[Int, RecordedValue]()(Ordering.by(-_))
     // values stemming from compiler generated code often have the same anchor as regular values
     // and get recorded before them; let's filter them out
-    for (value <- recordedValues) if (!map.contains(value.anchor)) map += (value.anchor -> value)
+    for { value <- recordedValues } {
+      if (!map.contains(value.anchor)) map += (value.anchor -> value)
+    }
     map.values
   }
 

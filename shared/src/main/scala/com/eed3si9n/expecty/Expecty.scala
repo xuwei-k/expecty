@@ -38,7 +38,7 @@ class Expecty(failEarly: Boolean = true, showTypes: Boolean = false,
     }
   }
 
-  val listener = new ExpectyListener
+  override lazy val listener = new ExpectyListener
 }
 
 object Expecty {
