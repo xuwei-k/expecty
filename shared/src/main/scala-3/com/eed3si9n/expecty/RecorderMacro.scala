@@ -94,7 +94,7 @@ object RecorderMacro {
 
         def recordValue(expr: Term, origExpr: Term): Term = {
           // debug
-          // println("recording " + expr.showExtractors)
+          // println("recording " + expr.showExtractors + " at " + getAnchor(expr))
 
           def skipIdent(sym: Symbol): Boolean =
             sym.fullName match {
@@ -115,19 +115,27 @@ object RecorderMacro {
             case TypeApply(_, _) => expr
             case Ident(_) if skipIdent(expr.symbol) => expr
             case _ =>
-              Block(
+              val sym = '[RecorderRuntime].unseal.symbol match {
+                case IsClassDefSymbol(sym) => sym
+              }
+              val m = sym.method("recordValue").head
+              val tapply = '{ recorderRuntime }.unseal
+                .select(m)
+                .appliedToType(expr.tpe)
+              Apply.copy(expr)(
+                tapply,
                 List(
-                  '{ recorderRuntime.recordValue(
-                   ${ expr.seal },
-                   ${ Literal(Constant.Int(getAnchor(expr))).seal.asInstanceOf[Expr[Int]] }) }.unseal
-                ),
-                expr
+                  expr,
+                  Literal(Constant.Int(getAnchor(expr)))
+                )
               )
           }
         }
 
         def getAnchor(expr: Term): Int =
           expr match {
+            case Apply(x, ys) if x.symbol.fullName == "com.eed3si9n.expecty.RecorderRuntime.recordValue" && ys.nonEmpty =>
+              getAnchor(ys.head)
             case Apply(x, ys)     => getAnchor(x) + 0
             case TypeApply(x, ys) => getAnchor(x) + 0
             case Select(x, y)     =>

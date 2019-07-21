@@ -23,7 +23,8 @@ class ExpressionRenderer(showTypes: Boolean) {
     val lines = ListBuffer(new StringBuilder)
 
     val rightToLeft = filterAndSortByAnchor(recordedExpr.recordedValues)
-    for (recordedValue <- rightToLeft) placeValue(lines, recordedValue.value, recordedValue.anchor - offset)
+    for (recordedValue <- rightToLeft) placeValue(lines, recordedValue.value,
+      math.max(recordedValue.anchor - offset, 0))
 
     lines.prepend(intro)
     lines.append(new StringBuilder)

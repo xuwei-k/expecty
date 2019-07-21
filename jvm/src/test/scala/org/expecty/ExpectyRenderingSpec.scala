@@ -172,27 +172,14 @@ Person(Fred,42)
   @Test
   def method_call_zero_args(): Unit = {
     val person = Person()
-    if (isDotty) {
-      // this seems like a bug
-      outputs("""
-person.doIt() == "pending"
-       |      |
-       done   false
-    """) {
-        assert {
-          person.doIt() == "pending"
-        }
-      }
-    } else {
-      outputs("""
+    outputs("""
 person.doIt() == "pending"
 |      |      |
 |      done   false
 Person(Fred,42)
     """) {
-        assert {
-          person.doIt() == "pending"
-        }
+      assert {
+        person.doIt() == "pending"
       }
     }
   }
