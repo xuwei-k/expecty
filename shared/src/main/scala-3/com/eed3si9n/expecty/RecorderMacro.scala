@@ -32,12 +32,6 @@ object RecorderMacro {
     import reflect._
     val termArg: Term = recording.unseal.underlyingArgument
 
-    def splitExpressions(recording: Term): List[Term] =
-      recording match {
-        case Block(xs, y) => (xs collect { case t: Term => t }) ::: List(y)
-        case _ => List(recording)
-      }
-
     def getText(expr: Tree): String = {
       val pos = expr.pos
       (" " * pos.startColumn) + pos.sourceCode
@@ -60,19 +54,16 @@ object RecorderMacro {
         }
 
         def recordExpressions(recording: Term): List[Term] = {
-          val exprs = splitExpressions(recording)
-          exprs flatMap { expr =>
-            val text = getText(expr)
-            val ast = expr.showExtractors
-            try {
-              List(
-                '{ recorderRuntime.resetValues() }.unseal,
-                recordExpression(text, ast, expr)
-              )
-            } catch {
-              case e: Throwable => throw new RuntimeException(
-                "Expecty: Error rewriting expression.\nText: " + text + "\nAST : " + ast, e)
-            }
+          val text = getText(recording)
+          val ast = recording.showExtractors
+          try {
+            List(
+              '{ recorderRuntime.resetValues() }.unseal,
+              recordExpression(text, ast, recording)
+            )
+          } catch {
+            case e: Throwable => throw new RuntimeException(
+              "Expecty: Error rewriting expression.\nText: " + text + "\nAST : " + ast, e)
           }
         }
 

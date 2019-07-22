@@ -43,16 +43,13 @@ class RecorderMacro[C <: Context](val context: C) {
   }
 
   private[this] def recordExpressions(recording: Tree): List[Tree] = {
-    val exprs = splitExpressions(recording)
-    exprs.flatMap { expr =>
-      val text = getText(expr)
-      val ast = showRaw(expr)
-      try {
-        List(resetValues, recordExpression(text, ast, expr))
-      } catch {
-        case e: Throwable => throw new RuntimeException(
-          "Expecty: Error rewriting expression.\nText: " + text + "\nAST : " + ast, e)
-      }
+    val text = getText(recording)
+    val ast = showRaw(recording)
+    try {
+      List(resetValues, recordExpression(text, ast, recording))
+    } catch {
+      case e: Throwable => throw new RuntimeException(
+        "Expecty: Error rewriting expression.\nText: " + text + "\nAST : " + ast, e)
     }
   }
 
