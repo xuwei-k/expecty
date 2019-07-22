@@ -15,6 +15,6 @@ package com.eed3si9n.expecty
 
 trait RecorderListener[T] {
   def valueRecorded(recordedValue: RecordedValue): Unit = {}
-  def expressionRecorded(recordedExpr: RecordedExpression[T]): Unit = {}
-  def recordingCompleted(recording: Recording[T]): Unit = {}
+  def expressionRecorded(recordedExpr: RecordedExpression[T], recordedMessage: Function0[String]): Unit = {}
+  def recordingCompleted(recording: Recording[T], recordedMessage: Function0[String]): Unit = {}
 }

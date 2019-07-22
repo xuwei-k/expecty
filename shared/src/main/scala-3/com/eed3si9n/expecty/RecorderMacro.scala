@@ -22,14 +22,15 @@ object RecorderMacro {
   def apply(
       recording: Expr[Boolean],
       listener: Expr[RecorderListener[Boolean]])(implicit reflect: Reflection): Expr[Unit] = {
+    apply(recording, '{""}, listener)
+  }
+
+  def apply(
+      recording: Expr[Boolean],
+      message: Expr[String],
+      listener: Expr[RecorderListener[Boolean]])(implicit reflect: Reflection): Expr[Unit] = {
     import reflect._
     val termArg: Term = recording.unseal.underlyingArgument
-
-    def splitExpressions(recording: Term): List[Term] =
-      recording match {
-        case Block(xs, y) => (xs collect { case t: Term => t }) ::: List(y)
-        case _ => List(recording)
-      }
 
     def getText(expr: Tree): String = {
       val pos = expr.pos
@@ -38,6 +39,7 @@ object RecorderMacro {
 
     '{
       val recorderRuntime: RecorderRuntime = new RecorderRuntime($listener)
+      recorderRuntime.recordMessage($message)
       ${
         val runtimeSym = '[RecorderRuntime].unseal.symbol match {
           case IsClassDefSymbol(sym) => sym
@@ -52,19 +54,16 @@ object RecorderMacro {
         }
 
         def recordExpressions(recording: Term): List[Term] = {
-          val exprs = splitExpressions(recording)
-          exprs flatMap { expr =>
-            val text = getText(expr)
-            val ast = expr.showExtractors
-            try {
-              List(
-                '{ recorderRuntime.resetValues() }.unseal,
-                recordExpression(text, ast, expr)
-              )
-            } catch {
-              case e: Throwable => throw new RuntimeException(
-                "Expecty: Error rewriting expression.\nText: " + text + "\nAST : " + ast, e)
-            }
+          val text = getText(recording)
+          val ast = recording.showExtractors
+          try {
+            List(
+              '{ recorderRuntime.resetValues() }.unseal,
+              recordExpression(text, ast, recording)
+            )
+          } catch {
+            case e: Throwable => throw new RuntimeException(
+              "Expecty: Error rewriting expression.\nText: " + text + "\nAST : " + ast, e)
           }
         }
 

@@ -19,14 +19,15 @@ import junit.framework.ComparisonFailure
 import com.eed3si9n.expecty.Expecty
 
 class ExpectyRenderingSpec {
-  val assert = new Expecty(printAsts = true)
+  val assert = new Expecty() // (printAsts = true)
 
   def isDotty: Boolean =
     scala.util.Try(Class.forName("dotty.DottyPredef$")).isSuccess
 
   @Test
   def literals(): Unit = {
-    outputs("""
+    outputs("""assertion failed
+
 "abc".length() == 2
       |        |
       3        false
@@ -40,7 +41,8 @@ class ExpectyRenderingSpec {
   @Test
   def object_apply(): Unit = {
     if (isDotty) {
-      outputs("""
+      outputs("""assertion failed
+
 List() == List(1, 2)
 |      |  |
 List() |  List(1, 2)
@@ -51,7 +53,8 @@ List() |  List(1, 2)
         }
       }
     } else {
-      outputs("""
+      outputs("""assertion failed
+
 List() == List(1, 2)
        |  |
        |  List(1, 2)
@@ -67,7 +70,8 @@ List() == List(1, 2)
   @Test
   def object_apply_2(): Unit = {
     if (isDotty) {
-      outputs("""
+      outputs("""assertion failed
+
 List(1, 2) == List()
 |          |  |
 List(1, 2) |  List()
@@ -78,7 +82,8 @@ List(1, 2) |  List()
         }
       }
     } else {
-      outputs("""
+      outputs("""assertion failed
+
 List(1, 2) == List()
 |          |
 List(1, 2) false
@@ -94,7 +99,8 @@ List(1, 2) false
   def infix_operators(): Unit = {
     val str = "abc"
 
-    outputs("""
+    outputs("""assertion failed
+
 str + "def" == "other"
 |   |       |
 abc abcdef  false
@@ -109,7 +115,8 @@ abc abcdef  false
   def null_value(): Unit = {
     val x = null
 
-    outputs("""
+    outputs("""assertion failed
+
 x == "null"
 | |
 | false
@@ -142,7 +149,8 @@ null
   def arithmetic_expressions(): Unit = {
     val one = 1
 
-    outputs("""
+    outputs("""assertion failed
+
 one + 2 == 4
 |   |   |
 1   3   false
@@ -157,7 +165,8 @@ one + 2 == 4
   def property_read(): Unit = {
     val person = Person()
 
-    outputs("""
+    outputs("""assertion failed
+
 person.age == 43
 |      |   |
 |      42  false
@@ -172,7 +181,8 @@ Person(Fred,42)
   @Test
   def method_call_zero_args(): Unit = {
     val person = Person()
-    outputs("""
+    outputs("""assertion failed
+
 person.doIt() == "pending"
 |      |      |
 |      done   false
@@ -189,7 +199,8 @@ Person(Fred,42)
     val person = Person()
     val word = "hey"
 
-    outputs("""
+    outputs("""assertion failed
+
 person.sayTwice(word) == "hoho"
 |      |        |     |
 |      heyhey   hey   false
@@ -207,7 +218,8 @@ Person(Fred,42)
     val word1 = "hey"
     val word2 = "ho"
 
-    outputs("""
+    outputs("""assertion failed
+
 person.sayTwo(word1, word2) == "hoho"
 |      |      |      |      |
 |      heyho  hey    ho     false
@@ -226,7 +238,8 @@ Person(Fred,42)
     val word2 = "bar"
     val word3 = "baz"
 
-    outputs("""
+    outputs("""assertion failed
+
 person.sayAll(word1, word2, word3) == "hoho"
 |      |      |      |      |      |
 |      |      foo    bar    baz    false
@@ -243,7 +256,8 @@ Person(Fred,42)
   def nested_property_reads_and_method_calls(): Unit = {
     val person = Person()
 
-    outputs("""
+    outputs("""assertion failed
+
 person.sayTwo(person.sayTwice(person.name), "bar") == "hoho"
 |      |      |      |        |      |             |
 |      |      |      FredFred |      Fred          false
@@ -265,7 +279,8 @@ Person(Fred,42)
 
 
     if (isDotty) {
-      outputs("""
+      outputs("""assertion failed
+
 Car(brand, model).brand == "Audi"
 |   |      |            |
 |   BMW    M5           false
@@ -276,7 +291,8 @@ BMW M5
         }
       }
     } else {
-      outputs("""
+      outputs("""assertion failed
+
 Car(brand, model).brand == "Audi"
 |   |      |      |     |
 |   BMW    M5     BMW   false
@@ -313,7 +329,8 @@ BMW M5
   @Test
   def tuple(): Unit = {
     if (isDotty) {
-      outputs("""
+      outputs("""assertion failed
+
 (1, 2)._1 == 3
  |     |  |
  (1,2) 1  false
@@ -323,7 +340,8 @@ BMW M5
       }
     }
     } else {
-      outputs("""
+      outputs("""assertion failed
+
 (1, 2)._1 == 3
 |      |  |
 (1,2)  1  false
@@ -397,7 +415,8 @@ BMW M5
   @Test
   def option_type(): Unit = {
     outputs(
-      """
+      """assertion failed
+
 Some(23) == Some(22)
 |        |  |
 Some(23) |  Some(22)
@@ -426,6 +445,32 @@ Some(23) |  Some(22)
 //      }
 //    }
 //  }
+
+  @Test
+  def message(): Unit = {
+    val person = Person()
+    if (isDotty) {
+      outputs("""assertion failed: something something
+
+person.age == 43
+|      |   |
+|      42  false
+Person(Fred,42)
+      """) {
+        assert(person.age == 43, "something something")
+      }
+    } else {
+      outputs("""assertion failed: something something
+
+assert(person.age == 43, "something something")
+       |      |   |
+       |      42  false
+       Person(Fred,42)
+      """) {
+        assert(person.age == 43, "something something")
+      }
+    }
+  }
 
   def outputs(rendering: String)(expectation: => Unit): Unit = {
     def normalize(s: String) = augmentString(s.trim()).lines.mkString

@@ -19,4 +19,6 @@ abstract class Recorder {
   def listener: RecorderListener[Boolean]
   inline def apply(recording: Boolean): Unit =
     ${ RecorderMacro.apply('recording, 'listener) }
+  inline def apply(recording: Boolean, message: => String): Unit =
+    ${ RecorderMacro.apply('recording, 'message, 'listener) }
 }
