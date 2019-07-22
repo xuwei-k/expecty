@@ -18,68 +18,60 @@ libraryDependencies += "com.eed3si9n.expecty" %% "expecty" % "0.11.0" % Test
 ## Code Examples
 
 ```scala
+Welcome to Scala 2.12.8 (OpenJDK 64-Bit Server VM, Java 1.8.0_212).
+Type in expressions for evaluation. Or try :help.
+
+scala> import com.eed3si9n.expecty.Expecty.assert
 import com.eed3si9n.expecty.Expecty.assert
 
-case class Person(name: String = "Fred", age: Int = 42) {
-  def say(words: String*) = words.mkString(" ")
-}
+scala> case class Person(name: String = "Fred", age: Int = 42) {
+     |   def say(words: String*) = words.mkString(" ")
+     | }
+defined class Person
 
-val person = Person()
+scala> val person = Person()
+person: Person = Person(Fred,42)
 
-// Passing expectations
+scala> // Passing expectations
 
-assert {
-  person.name == "Fred"
-  person.age * 2 == 84
-  person.say("Hi", "from", "Expecty!") == "Hi from Expecty!"
-}
+scala> assert(person.name == "Fred")
 
-// Failing expectation
+scala> assert(person.age * 2 == 84)
 
-val word1 = "ping"
-val word2 = "pong"
+scala> assert(person.say("Hi", "from", "Expecty!") == "Hi from Expecty!")
 
-assert {
-  person.say(word1, word2) == "pong pong"
-}
+scala> // Failing expectation
 
-/*
-Output:
+scala> val word1 = "ping"
+word1: String = ping
 
-java.lang.AssertionError:
+scala> val word2 = "pong"
+word2: String = pong
 
-person.say(word1, word2) == "pong pong"
-|      |   |      |      |
-|      |   ping   pong   false
-|      ping pong
-Person(Fred,42)
-*/
+scala> assert(person.say(word1, word2) == "pong pong")
+java.lang.AssertionError: assertion failed
 
-// Continue despite failing predicate
+assert(person.say(word1, word2) == "pong pong")
+       |      |   |      |      |
+       |      |   ping   pong   false
+       |      ping pong
+       Person(Fred,42)
 
-val expect2 = new Expecty(failEarly = false)
+  at com.eed3si9n.expecty.Expecty$ExpectyListener.expressionRecorded(Expecty.scala:35)
+  at com.eed3si9n.expecty.RecorderRuntime.recordExpression(RecorderRuntime.scala:39)
+  ... 36 elided
 
-expect2 {
-  person.name == "Frog"
-  person.age * 2 == 73
-}
+scala> assert(person.age * 2 == 73, "age is not right")
+java.lang.AssertionError: assertion failed: age is not right
 
-/*
-Output:
+assert(person.age * 2 == 73, "age is not right")
+       |      |   |   |
+       |      42  84  false
+       Person(Fred,42)
 
-java.lang.AssertionError:
-
-person.name == "Frog"
-|      |    |
-|      Fred false
-Person(Fred,42)
-
-
-person.age * 2 == 73
-|      |   |   |
-|      42  84  false
-Person(Fred,42)
-*/
+  at com.eed3si9n.expecty.Expecty$ExpectyListener.expressionRecorded(Expecty.scala:35)
+  at com.eed3si9n.expecty.RecorderRuntime.recordExpression(RecorderRuntime.scala:39)
+  ... 36 elided
 ```
 
 ## Further Examples
