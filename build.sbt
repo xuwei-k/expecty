@@ -1,9 +1,13 @@
 // shadow sbt-scalajs' crossProject and CrossType until Scala.js 1.0.0 is released
 import sbtcrossproject.{crossProject, CrossType}
 
-ThisBuild / version := "0.11.0-SNAPSHOT"
-ThisBuild / scalaVersion := "2.12.8"
-ThisBuild / crossScalaVersions := Vector("2.12.8", "2.13.0", "2.11.12", "2.10.7", "0.16.0-RC3")
+ThisBuild / version := "0.12.1-SNAPSHOT"
+val scala211 = "2.11.12"
+val scala212 = "2.12.8"
+val scala213 = "2.13.0"
+val scalaDotty = "0.16.0-RC3"
+ThisBuild / scalaVersion := scala212
+ThisBuild / crossScalaVersions := Vector(scala212, scala213, scala211, scalaDotty)
 
 lazy val root = (project in file("."))
   .aggregate(expectyJVM, expectyJS)
@@ -11,6 +15,23 @@ lazy val root = (project in file("."))
     name := "Expecty Root",
     Compile / sources := Nil,
     skip in publish := true,
+    commands += Command.command("release") { state =>
+      "clean" ::
+      s"++${scala212}!" ::
+      "expectyJVM/publishSigned" ::
+      "expectyJS/publishSigned" ::
+      s"++${scala211}!" ::
+      "expectyJVM/publishSigned" ::
+      "expectyJS/publishSigned" ::
+      "expectyNative/publishSigned" ::
+      s"++${scala212}!" ::
+      "expectyJVM/publishSigned" ::
+      "expectyJS/publishSigned" ::
+      s"++${scalaDotty}!" ::
+      "expectyJVM/publishSigned" ::
+      s"++${scala212}!" ::
+      state
+    },
   )
 
 lazy val utestVersion = "0.6.6"
