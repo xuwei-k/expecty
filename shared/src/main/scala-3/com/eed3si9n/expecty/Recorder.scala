@@ -15,10 +15,10 @@ package com.eed3si9n.expecty
 
 import language.experimental.macros
 
-abstract class Recorder {
-  def listener: RecorderListener[Boolean]
-  inline def apply(recording: Boolean): Unit =
+abstract class Recorder[R, A] {
+  def listener: RecorderListener[R, A]
+  inline def apply(recording: R): A =
     ${ RecorderMacro.apply('recording, 'listener) }
-  inline def apply(recording: Boolean, message: => String): Unit =
+  inline def apply(recording: R, message: => String): A =
     ${ RecorderMacro.apply('recording, 'message, 'listener) }
 }

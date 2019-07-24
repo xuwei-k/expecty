@@ -13,8 +13,8 @@
 */
 package com.eed3si9n.expecty
 
-trait RecorderListener[T] {
+trait RecorderListener[T, A] {
   def valueRecorded(recordedValue: RecordedValue): Unit = {}
   def expressionRecorded(recordedExpr: RecordedExpression[T], recordedMessage: Function0[String]): Unit = {}
-  def recordingCompleted(recording: Recording[T], recordedMessage: Function0[String]): Unit = {}
+  def recordingCompleted(recording: Recording[T], recordedMessage: Function0[String]): A
 }

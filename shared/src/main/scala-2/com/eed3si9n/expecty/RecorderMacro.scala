@@ -19,23 +19,23 @@ import scala.util.Properties
 class RecorderMacro[C <: Context](val context: C) {
   import context.universe._
 
-  def apply(recording: context.Tree, message: context.Tree): Expr[Unit] = {
-    context.Expr(Block(declareRuntime ::
+  def apply[R: context.WeakTypeTag, A: context.WeakTypeTag](recording: context.Tree, message: context.Tree): Expr[A] = {
+    context.Expr(Block(declareRuntime[R, A] ::
       recordMessage(message) ::
       recordExpressions(recording),
       completeRecording))
   }
 
-  private[this] def declareRuntime: Tree = {
-    val runtimeClass = context.mirror.staticClass(classOf[RecorderRuntime].getName)
+  private[this] def declareRuntime[R: context.WeakTypeTag, A : context.WeakTypeTag] : Tree = {
+    val runtimeClass = context.mirror.staticClass(classOf[RecorderRuntime[_, _]].getName())
     ValDef(
       Modifiers(),
       termName(context)("$com_eed3si9n_expecty_recorderRuntime"),
-      TypeTree(runtimeClass.toType),
+      TypeTree(weakTypeOf[RecorderRuntime[R, A]]),
       Apply(
         Select(
           New(Ident(runtimeClass)),
-          termName(context)("<init>")),
+          termNames.CONSTRUCTOR),
         List(
           Select(
             context.prefix.tree,
@@ -66,6 +66,7 @@ class RecorderMacro[C <: Context](val context: C) {
         Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")),
         termName(context)("completeRecording")),
       List())
+
 
   private[this] def resetValues: Tree =
     Apply(
@@ -142,13 +143,13 @@ Instrumented AST: ${showRaw(instrumented)}")
 }
 
 object RecorderMacro1 {
-  def apply(context: Context)(recording: context.Tree): context.Expr[Unit] = {
-    new RecorderMacro[context.type](context).apply(recording, context.literal("").tree)
+  def apply[R: context.WeakTypeTag, A: context.WeakTypeTag](context: Context)(recording: context.Tree): context.Expr[A] = {
+    new RecorderMacro[context.type](context).apply[R, A](recording, context.literal("").tree)
   }
 }
 
 object RecorderMacro {
-  def apply(context: Context)(recording: context.Tree, message: context.Tree): context.Expr[Unit] = {
-    new RecorderMacro[context.type](context).apply(recording, message)
+  def apply[R: context.WeakTypeTag, A : context.WeakTypeTag](context: Context)(recording: context.Tree, message: context.Tree): context.Expr[A] = {
+    new RecorderMacro[context.type](context).apply[R, A](recording, message)
   }
 }
