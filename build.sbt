@@ -5,7 +5,7 @@ ThisBuild / version := "0.12.1-SNAPSHOT"
 val scala211 = "2.11.12"
 val scala212 = "2.12.8"
 val scala213 = "2.13.0"
-val scalaDotty = "0.16.0-RC3"
+val scalaDotty = "0.17.0-RC1"
 ThisBuild / scalaVersion := scala212
 ThisBuild / crossScalaVersions := Vector(scala212, scala213, scala211, scalaDotty)
 

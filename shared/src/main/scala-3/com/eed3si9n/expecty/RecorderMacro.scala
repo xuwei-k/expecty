@@ -21,15 +21,15 @@ object RecorderMacro {
 
   def apply(
       recording: Expr[Boolean],
-      listener: Expr[RecorderListener[Boolean]])(implicit reflect: Reflection): Expr[Unit] = {
+      listener: Expr[RecorderListener[Boolean]]) given (qctx: QuoteContext): Expr[Unit] = {
     apply(recording, '{""}, listener)
   }
 
   def apply(
       recording: Expr[Boolean],
       message: Expr[String],
-      listener: Expr[RecorderListener[Boolean]])(implicit reflect: Reflection): Expr[Unit] = {
-    import reflect._
+      listener: Expr[RecorderListener[Boolean]]) given (qctx: QuoteContext): Expr[Unit] = {
+    import qctx.tasty._
     val termArg: Term = recording.unseal.underlyingArgument
 
     def getText(expr: Tree): String = {
@@ -71,8 +71,8 @@ object RecorderMacro {
           val instrumented = recordAllValues(expr)
           Apply(recordExpressionSel,
             List(
-              Literal(Constant.String(text)),
-              Literal(Constant.String(ast)),
+              Literal(Constant(text)),
+              Literal(Constant(ast)),
               instrumented
             ))
         }
@@ -132,7 +132,7 @@ object RecorderMacro {
                 tapply,
                 List(
                   expr,
-                  Literal(Constant.Int(getAnchor(expr)))
+                  Literal(Constant(getAnchor(expr)))
                 )
               )
           }
@@ -156,17 +156,4 @@ object RecorderMacro {
       ()
     }
   }
-
-  // 0.17.0 nightly
-  // def apply(expr: Expr[Boolean]) given (qctx: QuoteContext): Expr[Unit] = {
-  //   import qctx.tasty._
-  //   import util._
-  //   val termArg: Term = expr.unseal.underlyingArgument
-  //   val errorMessage: Expr[Any] = Literal(Constant(termArg.toString)).seal
-  //   '{
-  //     if (!$expr) {
-  //       throw new AssertionError(s"failed assertion: ${ $errorMessage }")
-  //     }
-  //   }
-  // }
 }
