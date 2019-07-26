@@ -19,16 +19,16 @@ import scala.tasty._
 object RecorderMacro {
   implicit val toolbox: scala.quoted.Toolbox = scala.quoted.Toolbox.make(getClass.getClassLoader)
 
-  def apply(
-      recording: Expr[Boolean],
-      listener: Expr[RecorderListener[Boolean]]) given (qctx: QuoteContext): Expr[Unit] = {
+  def apply[R: Type, A: Type](
+      recording: Expr[R],
+      listener: Expr[RecorderListener[R, A]]) given (qctx: QuoteContext): Expr[A] = {
     apply(recording, '{""}, listener)
   }
 
-  def apply(
-      recording: Expr[Boolean],
+  def apply[R: Type, A: Type](
+      recording: Expr[R],
       message: Expr[String],
-      listener: Expr[RecorderListener[Boolean]]) given (qctx: QuoteContext): Expr[Unit] = {
+      listener: Expr[RecorderListener[R, A]]) given (qctx: QuoteContext): Expr[A] = {
     import qctx.tasty._
     val termArg: Term = recording.unseal.underlyingArgument
 
@@ -38,10 +38,10 @@ object RecorderMacro {
     }
 
     '{
-      val recorderRuntime: RecorderRuntime = new RecorderRuntime($listener)
+      val recorderRuntime: RecorderRuntime[R, A] = new RecorderRuntime($listener)
       recorderRuntime.recordMessage($message)
       ${
-        val runtimeSym = '[RecorderRuntime].unseal.symbol match {
+        val runtimeSym = '[RecorderRuntime[_, _]].unseal.symbol match {
           case IsClassDefSymbol(sym) => sym
         }
         val recordExpressionSel: Term = {
@@ -151,9 +151,8 @@ object RecorderMacro {
         Block(
           recordExpressions(termArg),
           '{ recorderRuntime.completeRecording() }.unseal
-        ).seal
+        ).seal.cast[A]
       }
-      ()
     }
   }
 }

@@ -14,13 +14,13 @@
 
 package com.eed3si9n.expecty
 
-class Expecty extends Recorder {
+class Expecty extends Recorder[Boolean, Unit] {
   val failEarly: Boolean = true
   val showTypes: Boolean = false
   // val printAsts: Boolean = false
   // val printExprs: Boolean = false
 
-  class ExpectyListener extends RecorderListener[Boolean] {
+  class ExpectyListener extends RecorderListener[Boolean, Unit] {
     override def expressionRecorded(
         recordedExpr: RecordedExpression[Boolean], recordedMessage: Function0[String]): Unit = {
       lazy val rendering: String = new ExpressionRenderer(showTypes).render(recordedExpr)
@@ -35,6 +35,9 @@ class Expecty extends Recorder {
         throw new AssertionError(header + "\n\n" + rendering)
       }
     }
+
+    override def recordingCompleted(
+        recording: Recording[Boolean], recordedMessage: Function0[String]) = {}
   }
 
   override lazy val listener = new ExpectyListener

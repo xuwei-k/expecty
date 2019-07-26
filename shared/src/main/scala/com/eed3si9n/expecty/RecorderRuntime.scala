@@ -14,9 +14,9 @@
 package com.eed3si9n.expecty
 
 // one instance per recording
-class RecorderRuntime(listener: RecorderListener[Boolean]) {
+class RecorderRuntime[R, A](listener: RecorderListener[R, A]) {
   protected var recordedValues: List[RecordedValue] = _
-  protected var recordedExprs: List[RecordedExpression[Boolean]] = List.empty
+  protected var recordedExprs: List[RecordedExpression[R]] = List.empty
   protected var recordedMessage: Function0[String] = () => ""
 
   def resetValues(): Unit = {
@@ -34,13 +34,13 @@ class RecorderRuntime(listener: RecorderListener[Boolean]) {
     recordedMessage = () => message
   }
 
-  def recordExpression(text: String, ast: String, value: Boolean): Unit = {
+  def recordExpression(text: String, ast: String, value: R): Unit = {
     val recordedExpr = RecordedExpression(text, ast, value, recordedValues)
     listener.expressionRecorded(recordedExpr, recordedMessage)
     recordedExprs = recordedExpr :: recordedExprs
   }
 
-  def completeRecording(): Unit = {
+  def completeRecording(): A = {
     val lastRecorded = recordedExprs.head
     val recording = Recording(lastRecorded.value, recordedExprs)
     listener.recordingCompleted(recording, recordedMessage)
