@@ -24,7 +24,7 @@ lazy val root = (project in file("."))
       "expectyJVM/publishSigned" ::
       "expectyJS/publishSigned" ::
       "expectyNative/publishSigned" ::
-      s"++${scala212}!" ::
+      s"++${scala213}!" ::
       "expectyJVM/publishSigned" ::
       "expectyJS/publishSigned" ::
       s"++${scalaDotty}!" ::
