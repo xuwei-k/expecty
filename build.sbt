@@ -3,9 +3,9 @@ import sbtcrossproject.{crossProject, CrossType}
 
 ThisBuild / version := "0.13.1-SNAPSHOT"
 val scala211 = "2.11.12"
-val scala212 = "2.12.8"
-val scala213 = "2.13.0"
-val scalaDotty = "0.17.0-RC1"
+val scala212 = "2.12.10"
+val scala213 = "2.13.1"
+val scalaDotty = "0.21.0-RC1"
 ThisBuild / scalaVersion := scala212
 ThisBuild / crossScalaVersions := Vector(scala212, scala213, scala211, scalaDotty)
 
@@ -34,11 +34,18 @@ lazy val root = (project in file("."))
     },
   )
 
-lazy val utestVersion = "0.6.6"
+lazy val utestVersion = Def.setting(
+  CrossVersion.partialVersion(scalaVersion.value) match {
+    case Some((2, v)) if v <= 11 =>
+      "0.6.8"
+    case _ =>
+      "0.6.9"
+  }
+)
 lazy val utestJVMRef = ProjectRef(uri("git://github.com/eed3si9n/utest.git#79950544"), "utestJVM")
-lazy val utestJVMLib = "com.lihaoyi" %% "utest" % utestVersion
+lazy val utestJVMLib = Def.setting("com.lihaoyi" %% "utest" % utestVersion.value)
 lazy val utestJSRef = ProjectRef(uri("git://github.com/eed3si9n/utest.git#79950544"), "utestJS")
-lazy val utestJSLib = "com.lihaoyi" %% "utest_sjs0.6" % utestVersion
+lazy val utestJSLib = Def.setting("com.lihaoyi" %% "utest_sjs0.6" % utestVersion.value)
 
 lazy val expecty = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file("."))
   .settings(
@@ -67,6 +74,14 @@ lazy val expecty = crossProject(JVMPlatform, JSPlatform, NativePlatform).in(file
   )
   .jvmSettings(
     libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test,
+    libraryDependencies ++= {
+      CrossVersion.partialVersion(scalaVersion.value) match {
+        case Some((0, _) | (3, _)) =>
+          Seq("ch.epfl.lamp" %% "dotty-staging" % scalaDotty)
+        case _ =>
+          Nil
+      }
+    },
   )
   .jsSettings(
     scalaJSModuleKind := ModuleKind.CommonJSModule,

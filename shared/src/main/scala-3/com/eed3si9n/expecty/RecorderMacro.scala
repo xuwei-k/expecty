@@ -14,21 +14,22 @@
 package com.eed3si9n.expecty
 
 import scala.quoted._
+import scala.quoted.staging.Toolbox
 import scala.tasty._
 
 object RecorderMacro {
-  implicit val toolbox: scala.quoted.Toolbox = scala.quoted.Toolbox.make(getClass.getClassLoader)
+  implicit val toolbox: Toolbox = Toolbox.make(getClass.getClassLoader)
 
   def apply[R: Type, A: Type](
       recording: Expr[R],
-      listener: Expr[RecorderListener[R, A]]) given (qctx: QuoteContext): Expr[A] = {
+      listener: Expr[RecorderListener[R, A]])(given qctx: QuoteContext): Expr[A] = {
     apply(recording, '{""}, listener)
   }
 
   def apply[R: Type, A: Type](
       recording: Expr[R],
       message: Expr[String],
-      listener: Expr[RecorderListener[R, A]]) given (qctx: QuoteContext): Expr[A] = {
+      listener: Expr[RecorderListener[R, A]])(given qctx: QuoteContext): Expr[A] = {
     import qctx.tasty._
     val termArg: Term = recording.unseal.underlyingArgument
 
