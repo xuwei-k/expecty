@@ -11,9 +11,10 @@
 * See the License for the specific language governing permissions and
 * limitations under the License.
 */
-package foo
 
 /*
+package foo
+
 import utest._
 
 object ExpectyUtestSpec extends TestSuite {
@@ -55,15 +56,15 @@ object ExpectyUtestSpec extends TestSuite {
       }
     }
 
-    "failingMultiExpectation" - {
-      intercept[AssertionError] {
-        assert {
-          name.length == 16
-          name.startsWith("Ho")
-          name.endsWith("Expecty!")
-        }
-      }
-    }
+    // "failingMultiExpectation" - {
+    //   intercept[AssertionError] {
+    //     assert {
+    //       name.length == 16
+    //       name.startsWith("Ho")
+    //       name.endsWith("Expecty!")
+    //     }
+    //   }
+    // }
   }
 }
 */
