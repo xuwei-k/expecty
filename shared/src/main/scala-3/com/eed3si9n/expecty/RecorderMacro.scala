@@ -17,18 +17,17 @@ import scala.quoted._
 import scala.tasty._
 
 object RecorderMacro {
-  implicit val toolbox: scala.quoted.Toolbox = scala.quoted.Toolbox.make(getClass.getClassLoader)
 
   def apply[R: Type, A: Type](
       recording: Expr[R],
-      listener: Expr[RecorderListener[R, A]]) given (qctx: QuoteContext): Expr[A] = {
+      listener: Expr[RecorderListener[R, A]])(using QuoteContext): Expr[A] = {
     apply(recording, '{""}, listener)
   }
 
   def apply[R: Type, A: Type](
       recording: Expr[R],
       message: Expr[String],
-      listener: Expr[RecorderListener[R, A]]) given (qctx: QuoteContext): Expr[A] = {
+      listener: Expr[RecorderListener[R, A]])(using QuoteContext): Expr[A] = {
     import qctx.tasty._
     val termArg: Term = recording.unseal.underlyingArgument
 
@@ -42,7 +41,7 @@ object RecorderMacro {
       recorderRuntime.recordMessage($message)
       ${
         val runtimeSym = '[RecorderRuntime[_, _]].unseal.symbol match {
-          case IsClassDefSymbol(sym) => sym
+          case sym if sym.isClassDef => sym
         }
         val recordExpressionSel: Term = {
           val m = runtimeSym.method("recordExpression").head
@@ -118,8 +117,8 @@ object RecorderMacro {
 
           def skipSelect(sym: Symbol): Boolean =
             (sym match {
-              case IsDefDefSymbol(sym) => sym.signature.paramSigs.nonEmpty
-              case IsValDefSymbol(sym) => skipIdent(sym)
+              case sym if sym.isDefDef => sym.signature.paramSigs.nonEmpty
+              case sym if sym.isValDef => skipIdent(sym)
               case _ => true
             })
           expr match {
