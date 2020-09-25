@@ -34,8 +34,8 @@ class RecorderRuntime[R, A](listener: RecorderListener[R, A]) {
     recordedMessage = () => message
   }
 
-  def recordExpression(text: String, ast: String, value: R): Unit = {
-    val recordedExpr = RecordedExpression(text, ast, value, recordedValues)
+  def recordExpression(text: String, ast: String, value: R, location: Location): Unit = {
+    val recordedExpr = RecordedExpression(text, ast, value, recordedValues, location)
     listener.expressionRecorded(recordedExpr, recordedMessage)
     recordedExprs = recordedExpr :: recordedExprs
   }
