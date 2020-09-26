@@ -472,6 +472,23 @@ assert(person.age == 43, "something something")
     }
   }
 
+  @Test
+  def literalsAll(): Unit = {
+    val maybeComma = if(isDotty) "" else ","
+    outputs(s"""assertion failed
+
+"def".length() == 2$maybeComma
+      |        |
+      3        false
+    """) {
+      assert.all(
+        "abc".length() == 3,
+        "def".length() == 2,
+        "fgh".length() == 3
+      )
+    }
+  }
+
   def outputs(rendering: String)(expectation: => Unit): Unit = {
     def normalize(s: String) = augmentString(s.trim()).lines.mkString
 

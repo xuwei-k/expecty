@@ -43,6 +43,25 @@ class ExpectySpec {
     assert(name.endsWith("Expecty!"))
   }
 
+  @Test
+  def multiplePassingExpectationsUsingAll(): Unit = {
+    assert.all(
+      name.length == 16,
+      name.startsWith("Hi"),
+      name.endsWith("Expecty!")
+    )
+  }
+
+  @Test(expected = classOf[AssertionError])
+  def mixedPassingAndFailingExpectationsUsingAll(): Unit = {
+    assert.all(
+      name.length == 16,
+      name.startsWith("Ho"),
+      name.endsWith("Expecty!")
+    )
+  }
+
+
   //TODO: needs assertion
   // @Test(expected = classOf[AssertionError])
   // def lateFailingExpectation(): Unit = {

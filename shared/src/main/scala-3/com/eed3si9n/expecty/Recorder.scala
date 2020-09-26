@@ -21,4 +21,6 @@ abstract class Recorder[R, A] {
     ${ RecorderMacro.apply('recording, 'listener) }
   inline def apply(recording: R, message: => String): A =
     ${ RecorderMacro.apply('recording, 'message, 'listener) }
+  inline def all(inline recordings: R*): A =
+    ${ RecorderMacro.all('recordings, 'listener)}
 }

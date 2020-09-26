@@ -26,6 +26,13 @@ class RecorderMacro[C <: Context](val context: C) {
       completeRecording))
   }
 
+  def all[R: context.WeakTypeTag, A: context.WeakTypeTag](recordings: Seq[context.Tree]): Expr[A] = {
+    context.Expr(Block(
+      declareRuntime[R, A] ::
+      recordings.toList.flatMap(recordExpressions),
+      completeRecording))
+  }
+
   private[this] def declareRuntime[R: context.WeakTypeTag, A : context.WeakTypeTag] : Tree = {
     val runtimeClass = context.mirror.staticClass(classOf[RecorderRuntime[_, _]].getName())
     ValDef(
@@ -156,16 +163,12 @@ Instrumented AST: ${showRaw(instrumented)}")
     New(typeOf[Location], path, relativePath, line)
   }
 
-  private def wrapOption[A](opt: Option[A]): context.Expr[Option[A]] =
-    context.Expr[Option[A]](
-      opt match {
-        case None =>
-          q"""_root_.scala.None"""
-        case Some(value) =>
-          val v = context.Expr[A](Literal(Constant(value)))
-          q"""_root_.scala.Option($v)"""
-      })
+}
 
+object RecorderMacroAll {
+  def apply[R: context.WeakTypeTag, A: context.WeakTypeTag](context: Context)(recordings: context.Tree*): context.Expr[A] = {
+    new RecorderMacro[context.type](context).all[R, A](recordings)
+  }
 }
 
 object RecorderMacro1 {

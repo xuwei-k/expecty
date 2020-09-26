@@ -19,4 +19,5 @@ abstract class Recorder[R, A] {
   def listener: RecorderListener[R, A]
   def apply(recording: R): A = macro RecorderMacro1.apply[R, A]
   def apply(recording: R, message: => String): A = macro RecorderMacro.apply[R, A]
+  def all(recordings: R*) : A = macro RecorderMacroAll.apply[R, A]
 }
