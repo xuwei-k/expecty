@@ -19,7 +19,7 @@ import junit.framework.ComparisonFailure
 import com.eed3si9n.expecty.Expecty
 
 class ExpectyLocationSpec {
-  val assert = new Expecty(true) // (displayLoc = true)
+  val assert = new Expecty { override val showLocation = true }
 
   @Test
   def position(): Unit = {
