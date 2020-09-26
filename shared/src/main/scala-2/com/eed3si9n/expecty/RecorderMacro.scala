@@ -91,7 +91,8 @@ Instrumented AST: ${showRaw(instrumented)}")
       List(
         context.literal(text).tree,
         context.literal(ast).tree,
-        instrumented))
+        instrumented,
+        getSourceLocation))
   }
 
   private[this] def splitExpressions(recording: Tree): List[Tree] = recording match {
@@ -140,6 +141,31 @@ Instrumented AST: ${showRaw(instrumented)}")
   private[this] def log(expr: Tree, msg: => String): Unit = {
     if (Properties.propOrFalse("org.expecty.debug")) context.info(expr.pos, msg, force = false)
   }
+
+  private def getSourceLocation = {
+    import context.universe._
+
+    val pwd  = java.nio.file.Paths.get("").toAbsolutePath
+    val p = context.enclosingPosition.source.path
+    val file = context.enclosingPosition.source.file.file
+    val rp = pwd.relativize(file.toPath()).toString()
+
+    val path = Literal(Constant(p))
+    val relativePath = Literal(Constant(rp))
+    val line = Literal(Constant(context.enclosingPosition.line))
+    New(typeOf[Location], path, relativePath, line)
+  }
+
+  private def wrapOption[A](opt: Option[A]): context.Expr[Option[A]] =
+    context.Expr[Option[A]](
+      opt match {
+        case None =>
+          q"""_root_.scala.None"""
+        case Some(value) =>
+          val v = context.Expr[A](Literal(Constant(value)))
+          q"""_root_.scala.Option($v)"""
+      })
+
 }
 
 object RecorderMacro1 {

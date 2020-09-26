@@ -36,6 +36,21 @@ object RecorderMacro {
       (" " * pos.startColumn) + pos.sourceCode
     }
 
+    def getSourceLocation(expr: Tree) = {
+      val pos = expr.pos
+
+      val pwd  = java.nio.file.Paths.get("").toAbsolutePath
+      val path = pos.sourceFile.jpath
+      val file = path.toFile
+
+      val pathExpr = Expr(path.toString)
+      val relativePath = Expr(pwd.relativize(path).toString())
+      val line = Expr(pos.endLine)
+      val fileName = Expr(file.getName)
+
+      '{Location(${pathExpr}, ${relativePath}, ${line})}.unseal
+    }
+
     '{
       val recorderRuntime: RecorderRuntime[R, A] = new RecorderRuntime($listener)
       recorderRuntime.recordMessage($message)
@@ -55,10 +70,11 @@ object RecorderMacro {
         def recordExpressions(recording: Term): List[Term] = {
           val text = getText(recording)
           val ast = recording.showExtractors
+          val sourceLoc = getSourceLocation(recording)
           try {
             List(
               '{ recorderRuntime.resetValues() }.unseal,
-              recordExpression(text, ast, recording)
+              recordExpression(text, ast, recording, sourceLoc)
             )
           } catch {
             case e: Throwable => throw new RuntimeException(
@@ -66,13 +82,14 @@ object RecorderMacro {
           }
         }
 
-        def recordExpression(text: String, ast: String, expr: Term): Term = {
+        def recordExpression(text: String, ast: String, expr: Term, loc: Term): Term = {
           val instrumented = recordAllValues(expr)
           Apply(recordExpressionSel,
             List(
               Literal(Constant(text)),
               Literal(Constant(ast)),
-              instrumented
+              instrumented,
+              loc
             ))
         }
 

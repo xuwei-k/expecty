@@ -17,6 +17,7 @@ package com.eed3si9n.expecty
 class Expecty extends Recorder[Boolean, Unit] {
   val failEarly: Boolean = true
   val showTypes: Boolean = false
+  val showLocation: Boolean = false
   // val printAsts: Boolean = false
   // val printExprs: Boolean = false
 
@@ -27,9 +28,11 @@ class Expecty extends Recorder[Boolean, Unit] {
       // if (printAsts) println(recordedExpr.ast + "\n")
       // if (printExprs) println(rendering)
       if (!recordedExpr.value && failEarly) {
+        val loc = recordedExpr.location
+        val locStr = if(showLocation) " (" + loc.relativePath + ":" + loc.line + ")" else ""
         val msg = recordedMessage()
         val header =
-          "assertion failed" +
+          "assertion failed" + locStr +
             (if (msg == "") ""
             else ": " + msg)
         throw new AssertionError(header + "\n\n" + rendering)
