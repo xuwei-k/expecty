@@ -14,7 +14,7 @@
 package foo
 
 import org.junit.Test
-import com.eed3si9n.expecty.Expecty.assert
+import com.eed3si9n.expecty.Expecty.{assert, expect}
 
 class ExpectySpec {
   val name = "Hi from Expecty!"
@@ -45,7 +45,7 @@ class ExpectySpec {
 
   @Test
   def multiplePassingExpectationsUsingAll(): Unit = {
-    assert.all(
+    expect(
       name.length == 16,
       name.startsWith("Hi"),
       name.endsWith("Expecty!")
@@ -53,8 +53,8 @@ class ExpectySpec {
   }
 
   @Test(expected = classOf[AssertionError])
-  def mixedPassingAndFailingExpectationsUsingAll(): Unit = {
-    assert.all(
+  def mixedPassingAndFailingExpectationsUsingExpect(): Unit = {
+    expect(
       name.length == 16,
       name.startsWith("Ho"),
       name.endsWith("Expecty!")

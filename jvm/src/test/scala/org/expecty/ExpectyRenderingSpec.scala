@@ -16,10 +16,11 @@ package foo
 import org.junit.Assert._
 import org.junit.Test
 import junit.framework.ComparisonFailure
-import com.eed3si9n.expecty.Expecty
+import com.eed3si9n.expecty.{Expecty, VarargsExpecty}
 
 class ExpectyRenderingSpec {
   val assert = new Expecty() // (printAsts = true)
+  val expect = new VarargsExpecty
 
   def isDotty: Boolean =
     scala.util.Try(Class.forName("dotty.DottyPredef$")).isSuccess
@@ -473,7 +474,7 @@ assert(person.age == 43, "something something")
   }
 
   @Test
-  def literalsAll(): Unit = {
+  def literalsVarargs(): Unit = {
     val maybeComma = if(isDotty) "" else ","
     outputs(s"""assertion failed
 
@@ -481,7 +482,7 @@ assert(person.age == 43, "something something")
       |        |
       3        false
     """) {
-      assert.all(
+      expect(
         "abc".length() == 3,
         "def".length() == 2,
         "fgh".length() == 3

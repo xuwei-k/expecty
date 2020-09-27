@@ -17,7 +17,13 @@ import language.experimental.macros
 
 abstract class Recorder[R, A] {
   def listener: RecorderListener[R, A]
+}
+
+trait UnaryRecorder[R, A] { self : Recorder[R, A] =>
   def apply(recording: R): A = macro RecorderMacro1.apply[R, A]
   def apply(recording: R, message: => String): A = macro RecorderMacro.apply[R, A]
-  def all(recordings: R*) : A = macro RecorderMacroAll.apply[R, A]
+}
+
+trait VarargsRecoder[R, A] { self : Recorder[R, A] =>
+  def apply(recordings: R*) : A = macro VarargsRecorderMacro.apply[R, A]
 }

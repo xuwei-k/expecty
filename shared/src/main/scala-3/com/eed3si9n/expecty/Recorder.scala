@@ -17,10 +17,16 @@ import language.experimental.macros
 
 abstract class Recorder[R, A] {
   def listener: RecorderListener[R, A]
+}
+
+trait UnaryRecorder[R, A] { self: Recorder[R, A] =>
   inline def apply(recording: R): A =
     ${ RecorderMacro.apply('recording, 'listener) }
   inline def apply(recording: R, message: => String): A =
     ${ RecorderMacro.apply('recording, 'message, 'listener) }
-  inline def all(inline recordings: R*): A =
-    ${ RecorderMacro.all('recordings, 'listener)}
+}
+
+trait VarargsRecoder[R, A] { self: Recorder[R, A] =>
+  inline def apply(inline recordings: R*): A =
+    ${ RecorderMacro.varargs('recordings, 'listener)}
 }

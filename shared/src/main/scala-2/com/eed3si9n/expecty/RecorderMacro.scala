@@ -165,7 +165,7 @@ Instrumented AST: ${showRaw(instrumented)}")
 
 }
 
-object RecorderMacroAll {
+object VarargsRecorderMacro {
   def apply[R: context.WeakTypeTag, A: context.WeakTypeTag](context: Context)(recordings: context.Tree*): context.Expr[A] = {
     new RecorderMacro[context.type](context).all[R, A](recordings)
   }

@@ -31,7 +31,7 @@ object RecorderMacro {
     apply(Seq(recording), message, listener)
   }
 
-  def all[R: Type, A: Type](
+  def varargs[R: Type, A: Type](
       recordings: Expr[Seq[R]],
       listener: Expr[RecorderListener[R, A]])(using QuoteContext): Expr[A] = {
     //!\ only works because we're expecting the macro to expand `R*`
