@@ -28,8 +28,23 @@ object RecorderMacro {
       recording: Expr[R],
       message: Expr[String],
       listener: Expr[RecorderListener[R, A]])(using QuoteContext): Expr[A] = {
+    apply(Seq(recording), message, listener)
+  }
+
+  def varargs[R: Type, A: Type](
+      recordings: Expr[Seq[R]],
+      listener: Expr[RecorderListener[R, A]])(using QuoteContext): Expr[A] = {
+    //!\ only works because we're expecting the macro to expand `R*`
+    val Varargs(unTraversedRecordings) = recordings
+    apply(unTraversedRecordings, '{""}, listener)
+  }
+
+  def apply[R: Type, A: Type](
+      recordings: Seq[Expr[R]],
+      message: Expr[String],
+      listener: Expr[RecorderListener[R, A]])(using QuoteContext): Expr[A] = {
     import qctx.tasty._
-    val termArg: Term = recording.unseal.underlyingArgument
+    val termArgs: Seq[Term] = recordings.map(_.unseal.underlyingArgument)
 
     def getText(expr: Tree): String = {
       val pos = expr.pos
@@ -165,7 +180,7 @@ object RecorderMacro {
             case _                => expr.pos.startColumn
           }
         Block(
-          recordExpressions(termArg),
+          termArgs.toList.flatMap(recordExpressions),
           '{ recorderRuntime.completeRecording() }.unseal
         ).seal.cast[A]
       }

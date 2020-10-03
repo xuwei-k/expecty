@@ -14,7 +14,7 @@
 
 package com.eed3si9n.expecty
 
-class Expecty extends Recorder[Boolean, Unit] {
+abstract class ExpectyBase extends Recorder[Boolean, Unit] {
   val failEarly: Boolean = true
   val showTypes: Boolean = false
   val showLocation: Boolean = false
@@ -46,7 +46,10 @@ class Expecty extends Recorder[Boolean, Unit] {
   override lazy val listener = new ExpectyListener
 }
 
+class Expecty() extends ExpectyBase with UnaryRecorder[Boolean, Unit]
+class VarargsExpecty() extends ExpectyBase with VarargsRecoder[Boolean, Unit]
+
 object Expecty {
   lazy val assert: Expecty = new Expecty()
-  lazy val expect: Expecty = assert
+  lazy val expect: VarargsExpecty = new VarargsExpecty()
 }
