@@ -157,7 +157,7 @@ Instrumented AST: ${showRaw(instrumented)}")
     val abstractFile = context.enclosingPosition.source.file
 
     val rp = if (!abstractFile.isVirtual){
-      pwd.relativize(abstractFile.file.toPath())
+      pwd.relativize(abstractFile.file.toPath()).toString()
     } else p
 
     val path = Literal(Constant(p))
