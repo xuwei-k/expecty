@@ -154,8 +154,11 @@ Instrumented AST: ${showRaw(instrumented)}")
 
     val pwd  = java.nio.file.Paths.get("").toAbsolutePath
     val p = context.enclosingPosition.source.path
-    val file = context.enclosingPosition.source.file.file
-    val rp = pwd.relativize(file.toPath()).toString()
+    val abstractFile = context.enclosingPosition.source.file
+
+    val rp = if (!abstractFile.isVirtual){
+      pwd.relativize(abstractFile.file.toPath()).toString()
+    } else p
 
     val path = Literal(Constant(p))
     val relativePath = Literal(Constant(rp))

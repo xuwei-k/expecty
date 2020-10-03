@@ -55,15 +55,20 @@ object RecorderMacro {
       val pos = expr.pos
 
       val pwd  = java.nio.file.Paths.get("").toAbsolutePath
-      val path = pos.sourceFile.jpath
-      val file = path.toFile
-
-      val pathExpr = Expr(path.toString)
-      val relativePath = Expr(pwd.relativize(path).toString())
       val line = Expr(pos.endLine)
-      val fileName = Expr(file.getName)
 
-      '{Location(${pathExpr}, ${relativePath}, ${line})}.unseal
+      val path = pos.sourceFile.jpath
+      if (path != null){
+        val file = path.toFile
+
+        val pathExpr = Expr(path.toString)
+        val relativePath = Expr(pwd.relativize(path).toString())
+        val fileName = Expr(file.getName)
+
+        '{Location(${pathExpr}, ${relativePath}, ${line})}.unseal
+      } else {
+        '{Location("<virtual>", "<virtual>", ${line})}.unseal
+      }
     }
 
     '{
