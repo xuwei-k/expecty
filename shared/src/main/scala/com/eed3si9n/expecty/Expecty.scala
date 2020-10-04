@@ -40,14 +40,35 @@ abstract class ExpectyBase extends Recorder[Boolean, Unit] {
     }
 
     override def recordingCompleted(
-        recording: Recording[Boolean], recordedMessage: Function0[String]) = {}
+        recording: Recording[Boolean], recordedMessage: Function0[String]) = {
+
+      if(recording.recordedExprs.exists(e => !e.value) && !failEarly){
+        val failedExprs = recording.recordedExprs.filterNot(_.value).reverse
+
+        val loc = failedExprs.head.location
+        val locStr = if(showLocation) " (" + loc.relativePath + ":" + loc.line + ")" else ""
+        val msg = recordedMessage()
+
+        val rendering = failedExprs
+          .map(new ExpressionRenderer(showTypes).render)
+          .mkString("\n")
+
+        val assertion = if (failedExprs.size > 1) "assertions" else "assertion"
+
+        val header =
+          assertion + " failed " + locStr +
+            (if (msg == "") ""
+            else ": " + msg)
+        throw new AssertionError(header + "\n\n" + rendering)
+      }
+    }
   }
 
   override lazy val listener = new ExpectyListener
 }
 
 class Expecty() extends ExpectyBase with UnaryRecorder[Boolean, Unit]
-class VarargsExpecty() extends ExpectyBase with VarargsRecoder[Boolean, Unit]
+class VarargsExpecty() extends ExpectyBase with VarargsRecorder[Boolean, Unit]
 
 object Expecty {
   lazy val assert: Expecty = new Expecty()
