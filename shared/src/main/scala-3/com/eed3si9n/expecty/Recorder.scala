@@ -26,7 +26,7 @@ trait UnaryRecorder[R, A] { self: Recorder[R, A] =>
     ${ RecorderMacro.apply('recording, 'message, 'listener) }
 }
 
-trait VarargsRecoder[R, A] { self: Recorder[R, A] =>
+trait VarargsRecorder[R, A] { self: Recorder[R, A] =>
   inline def apply(inline recordings: R*): A =
     ${ RecorderMacro.varargs('recordings, 'listener)}
 }

@@ -24,6 +24,6 @@ trait UnaryRecorder[R, A] { self : Recorder[R, A] =>
   def apply(recording: R, message: => String): A = macro RecorderMacro.apply[R, A]
 }
 
-trait VarargsRecoder[R, A] { self : Recorder[R, A] =>
+trait VarargsRecorder[R, A] { self : Recorder[R, A] =>
   def apply(recordings: R*) : A = macro VarargsRecorderMacro.apply[R, A]
 }
