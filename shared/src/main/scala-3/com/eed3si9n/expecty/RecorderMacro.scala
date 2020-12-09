@@ -14,26 +14,25 @@
 package com.eed3si9n.expecty
 
 import scala.quoted._
-import scala.tasty._
 
 object RecorderMacro {
 
   def apply[R: Type, A: Type](
       recording: Expr[R],
-      listener: Expr[RecorderListener[R, A]])(using QuoteContext): Expr[A] = {
+      listener: Expr[RecorderListener[R, A]])(using Quotes): Expr[A] = {
     apply(recording, '{""}, listener)
   }
 
   def apply[R: Type, A: Type](
       recording: Expr[R],
       message: Expr[String],
-      listener: Expr[RecorderListener[R, A]])(using QuoteContext): Expr[A] = {
+      listener: Expr[RecorderListener[R, A]])(using Quotes): Expr[A] = {
     apply(Seq(recording), message, listener)
   }
 
   def varargs[R: Type, A: Type](
       recordings: Expr[Seq[R]],
-      listener: Expr[RecorderListener[R, A]])(using QuoteContext): Expr[A] = {
+      listener: Expr[RecorderListener[R, A]])(using Quotes): Expr[A] = {
     //!\ only works because we're expecting the macro to expand `R*`
     val Varargs(unTraversedRecordings) = recordings
     apply(unTraversedRecordings, '{""}, listener)
@@ -42,9 +41,9 @@ object RecorderMacro {
   def apply[R: Type, A: Type](
       recordings: Seq[Expr[R]],
       message: Expr[String],
-      listener: Expr[RecorderListener[R, A]])(using QuoteContext): Expr[A] = {
-    import qctx.tasty._
-    val termArgs: Seq[Term] = recordings.map(_.unseal.underlyingArgument)
+      listener: Expr[RecorderListener[R, A]])(using quotes: Quotes): Expr[A] = {
+    import quotes.reflect._
+    val termArgs: Seq[Term] = recordings.map(Term.of(_).underlyingArgument)
 
     def getText(expr: Tree): String = {
       val pos = expr.pos
@@ -65,26 +64,27 @@ object RecorderMacro {
         val relativePath = Expr(pwd.relativize(path).toString())
         val fileName = Expr(file.getName)
 
-        '{Location(${pathExpr}, ${relativePath}, ${line})}.unseal
+        Term.of('{Location(${pathExpr}, ${relativePath}, ${line})})
       } else {
-        '{Location("<virtual>", "<virtual>", ${line})}.unseal
+        Term.of('{Location("<virtual>", "<virtual>", ${line})})
       }
     }
 
     '{
+      import quotes.reflect._
       val recorderRuntime: RecorderRuntime[R, A] = new RecorderRuntime($listener)
       recorderRuntime.recordMessage($message)
       ${
-        val runtimeSym = '[RecorderRuntime[_, _]].unseal.symbol match {
+        val runtimeSym = TypeTree.of[RecorderRuntime[_, _]].symbol match {
           case sym if sym.isClassDef => sym
         }
         val recordExpressionSel: Term = {
           val m = runtimeSym.method("recordExpression").head
-          '{ recorderRuntime }.unseal.select(m)
+          Term.of('{ recorderRuntime }).select(m)
         }
         val recordValueSel: Term = {
           val m = runtimeSym.method("recordValue").head
-          '{ recorderRuntime }.unseal.select(m)
+          Term.of('{ recorderRuntime }).select(m)
         }
 
         def recordExpressions(recording: Term): List[Term] = {
@@ -93,7 +93,7 @@ object RecorderMacro {
           val sourceLoc = getSourceLocation(recording)
           try {
             List(
-              '{ recorderRuntime.resetValues() }.unseal,
+              Term.of('{ recorderRuntime.resetValues() }),
               recordExpression(text, ast, recording, sourceLoc)
             )
           } catch {
@@ -106,8 +106,8 @@ object RecorderMacro {
           val instrumented = recordAllValues(expr)
           Apply(recordExpressionSel,
             List(
-              Literal(Constant(text)),
-              Literal(Constant(ast)),
+              Literal(Constant.String(text)),
+              Literal(Constant.String(ast)),
               instrumented,
               loc
             ))
@@ -168,7 +168,7 @@ object RecorderMacro {
                 tapply,
                 List(
                   expr,
-                  Literal(Constant(getAnchor(expr)))
+                  Literal(Constant.Int(getAnchor(expr)))
                 )
               )
           }
@@ -186,8 +186,8 @@ object RecorderMacro {
           }
         Block(
           termArgs.toList.flatMap(recordExpressions),
-          '{ recorderRuntime.completeRecording() }.unseal
-        ).seal.cast[A]
+          Term.of('{ recorderRuntime.completeRecording() })
+        ).asExpr.asInstanceOf[Expr[A]]
       }
     }
   }
