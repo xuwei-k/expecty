@@ -187,11 +187,6 @@ object RecorderMacro {
             case _                => expr.pos.startColumn
           }
 
-        val block = Block(
-          termArgs.toList.flatMap(recordExpressions),
-          Term.of('{ recorderRuntime.completeRecording() })
-        )
-
         Block(
           termArgs.toList.flatMap(recordExpressions),
           Term.of('{ recorderRuntime.completeRecording() })
