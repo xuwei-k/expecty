@@ -19,20 +19,20 @@ object RecorderMacro {
 
   def apply[R: Type, A: Type](
       recording: Expr[R],
-      listener: Expr[RecorderListener[R, A]])(using Quotes): Expr[A] = {
+      listener: Expr[RecorderListener[R, A]])(using qctx: Quotes): Expr[A] = {
     apply(recording, '{""}, listener)
   }
 
   def apply[R: Type, A: Type](
       recording: Expr[R],
       message: Expr[String],
-      listener: Expr[RecorderListener[R, A]])(using Quotes): Expr[A] = {
+      listener: Expr[RecorderListener[R, A]])(using qctx: Quotes): Expr[A] = {
     apply(Seq(recording), message, listener)
   }
 
   def varargs[R: Type, A: Type](
       recordings: Expr[Seq[R]],
-      listener: Expr[RecorderListener[R, A]])(using Quotes): Expr[A] = {
+      listener: Expr[RecorderListener[R, A]])(using qctx: Quotes): Expr[A] = {
     //!\ only works because we're expecting the macro to expand `R*`
     val Varargs(unTraversedRecordings) = recordings
     apply(unTraversedRecordings, '{""}, listener)
@@ -41,8 +41,9 @@ object RecorderMacro {
   def apply[R: Type, A: Type](
       recordings: Seq[Expr[R]],
       message: Expr[String],
-      listener: Expr[RecorderListener[R, A]])(using quotes: Quotes): Expr[A] = {
-    import quotes.reflect._
+      listener: Expr[RecorderListener[R, A]])(using qctx0: Quotes): Expr[A] = {
+    import qctx0.reflect._
+    import util._
     val termArgs: Seq[Term] = recordings.map(Term.of(_).underlyingArgument)
 
     def getText(expr: Tree): String = {
@@ -70,12 +71,13 @@ object RecorderMacro {
       }
     }
 
+
     '{
-      import quotes.reflect._
+      // import qctx0.reflect._
       val recorderRuntime: RecorderRuntime[R, A] = new RecorderRuntime($listener)
       recorderRuntime.recordMessage($message)
       ${
-        val runtimeSym = TypeTree.of[RecorderRuntime[_, _]].symbol match {
+        val runtimeSym = TypeRepr.of[RecorderRuntime[_, _]].typeSymbol match {
           case sym if sym.isClassDef => sym
         }
         val recordExpressionSel: Term = {
@@ -117,7 +119,7 @@ object RecorderMacro {
           expr match {
             case New(_)     => expr
             case Literal(_) => expr
-            case Typed(r @ Repeated(xs, y), tpe) => recordSubValues(r)
+            case Typed(r @ Repeated(xs, y), tpe) => Typed.copy(r)(recordSubValues(r), tpe)
             // don't record value of implicit "this" added by compiler; couldn't find a better way to detect implicit "this" than via point
             case Select(x@This(_), y) if expr.pos.start == x.pos.start => expr
             // case x: Select if x.symbol.isModule => expr // don't try to record the value of packages
@@ -184,10 +186,16 @@ object RecorderMacro {
               expr.pos.startColumn + math.max(0, expr.pos.sourceCode.indexOf(y))
             case _                => expr.pos.startColumn
           }
+
+        val block = Block(
+          termArgs.toList.flatMap(recordExpressions),
+          Term.of('{ recorderRuntime.completeRecording() })
+        )
+
         Block(
           termArgs.toList.flatMap(recordExpressions),
           Term.of('{ recorderRuntime.completeRecording() })
-        ).asExpr.asInstanceOf[Expr[A]]
+        ).asExprOf[A]
       }
     }
   }
