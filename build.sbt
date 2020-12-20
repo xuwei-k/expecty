@@ -5,9 +5,9 @@ ThisBuild / version := "0.14.1-SNAPSHOT"
 val scala211 = "2.11.12"
 val scala212 = "2.12.12"
 val scala213 = "2.13.3"
-val scalaDotty = "0.27.0-RC1"
+val scala3   = "3.0.0-M2"
 ThisBuild / scalaVersion := scala213
-ThisBuild / crossScalaVersions :=  Vector(scala212, scala213, scala211, scalaDotty)
+ThisBuild / crossScalaVersions :=  Vector(scala212, scala213, scala211, scala3)
 
 lazy val root = (project in file("."))
   .aggregate(expectyJVM, expectyJS)
@@ -27,7 +27,7 @@ lazy val root = (project in file("."))
       s"++${scala213}!" ::
       "expectyJVM/publishSigned" ::
       "expectyJS/publishSigned" ::
-      s"++${scalaDotty}!" ::
+      s"++${scala3}!" ::
       "expectyJVM/publishSigned" ::
       s"++${scala212}!" ::
       state

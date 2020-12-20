@@ -14,26 +14,25 @@
 package com.eed3si9n.expecty
 
 import scala.quoted._
-import scala.tasty._
 
 object RecorderMacro {
 
   def apply[R: Type, A: Type](
       recording: Expr[R],
-      listener: Expr[RecorderListener[R, A]])(using QuoteContext): Expr[A] = {
+      listener: Expr[RecorderListener[R, A]])(using qctx: Quotes): Expr[A] = {
     apply(recording, '{""}, listener)
   }
 
   def apply[R: Type, A: Type](
       recording: Expr[R],
       message: Expr[String],
-      listener: Expr[RecorderListener[R, A]])(using QuoteContext): Expr[A] = {
+      listener: Expr[RecorderListener[R, A]])(using qctx: Quotes): Expr[A] = {
     apply(Seq(recording), message, listener)
   }
 
   def varargs[R: Type, A: Type](
       recordings: Expr[Seq[R]],
-      listener: Expr[RecorderListener[R, A]])(using QuoteContext): Expr[A] = {
+      listener: Expr[RecorderListener[R, A]])(using qctx: Quotes): Expr[A] = {
     //!\ only works because we're expecting the macro to expand `R*`
     val Varargs(unTraversedRecordings) = recordings
     apply(unTraversedRecordings, '{""}, listener)
@@ -42,9 +41,10 @@ object RecorderMacro {
   def apply[R: Type, A: Type](
       recordings: Seq[Expr[R]],
       message: Expr[String],
-      listener: Expr[RecorderListener[R, A]])(using QuoteContext): Expr[A] = {
-    import qctx.tasty._
-    val termArgs: Seq[Term] = recordings.map(_.unseal.underlyingArgument)
+      listener: Expr[RecorderListener[R, A]])(using qctx0: Quotes): Expr[A] = {
+    import qctx0.reflect._
+    import util._
+    val termArgs: Seq[Term] = recordings.map(Term.of(_).underlyingArgument)
 
     def getText(expr: Tree): String = {
       val pos = expr.pos
@@ -65,26 +65,28 @@ object RecorderMacro {
         val relativePath = Expr(pwd.relativize(path).toString())
         val fileName = Expr(file.getName)
 
-        '{Location(${pathExpr}, ${relativePath}, ${line})}.unseal
+        Term.of('{Location(${pathExpr}, ${relativePath}, ${line})})
       } else {
-        '{Location("<virtual>", "<virtual>", ${line})}.unseal
+        Term.of('{Location("<virtual>", "<virtual>", ${line})})
       }
     }
 
+
     '{
+      // import qctx0.reflect._
       val recorderRuntime: RecorderRuntime[R, A] = new RecorderRuntime($listener)
       recorderRuntime.recordMessage($message)
       ${
-        val runtimeSym = '[RecorderRuntime[_, _]].unseal.symbol match {
+        val runtimeSym = TypeRepr.of[RecorderRuntime[_, _]].typeSymbol match {
           case sym if sym.isClassDef => sym
         }
         val recordExpressionSel: Term = {
           val m = runtimeSym.method("recordExpression").head
-          '{ recorderRuntime }.unseal.select(m)
+          Term.of('{ recorderRuntime }).select(m)
         }
         val recordValueSel: Term = {
           val m = runtimeSym.method("recordValue").head
-          '{ recorderRuntime }.unseal.select(m)
+          Term.of('{ recorderRuntime }).select(m)
         }
 
         def recordExpressions(recording: Term): List[Term] = {
@@ -93,7 +95,7 @@ object RecorderMacro {
           val sourceLoc = getSourceLocation(recording)
           try {
             List(
-              '{ recorderRuntime.resetValues() }.unseal,
+              Term.of('{ recorderRuntime.resetValues() }),
               recordExpression(text, ast, recording, sourceLoc)
             )
           } catch {
@@ -106,8 +108,8 @@ object RecorderMacro {
           val instrumented = recordAllValues(expr)
           Apply(recordExpressionSel,
             List(
-              Literal(Constant(text)),
-              Literal(Constant(ast)),
+              Literal(Constant.String(text)),
+              Literal(Constant.String(ast)),
               instrumented,
               loc
             ))
@@ -117,7 +119,7 @@ object RecorderMacro {
           expr match {
             case New(_)     => expr
             case Literal(_) => expr
-            case Typed(r @ Repeated(xs, y), tpe) => recordSubValues(r)
+            case Typed(r @ Repeated(xs, y), tpe) => Typed.copy(r)(recordSubValues(r), tpe)
             // don't record value of implicit "this" added by compiler; couldn't find a better way to detect implicit "this" than via point
             case Select(x@This(_), y) if expr.pos.start == x.pos.start => expr
             // case x: Select if x.symbol.isModule => expr // don't try to record the value of packages
@@ -168,7 +170,7 @@ object RecorderMacro {
                 tapply,
                 List(
                   expr,
-                  Literal(Constant(getAnchor(expr)))
+                  Literal(Constant.Int(getAnchor(expr)))
                 )
               )
           }
@@ -184,10 +186,11 @@ object RecorderMacro {
               expr.pos.startColumn + math.max(0, expr.pos.sourceCode.indexOf(y))
             case _                => expr.pos.startColumn
           }
+
         Block(
           termArgs.toList.flatMap(recordExpressions),
-          '{ recorderRuntime.completeRecording() }.unseal
-        ).seal.cast[A]
+          Term.of('{ recorderRuntime.completeRecording() })
+        ).asExprOf[A]
       }
     }
   }
