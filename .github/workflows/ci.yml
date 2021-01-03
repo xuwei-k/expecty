@@ -31,6 +31,8 @@ jobs:
       uses: coursier/cache-action@v5
     - name: Build and test
       run: |
+        sudo apt-get update
+        sudo apt install clang libunwind-dev libgc-dev libre2-dev
         sbt -v ++2.13.4! expectyJVM/test expectyJS/test
         sbt -v ++3.0.0-M3! expectyJVM/test expectyJS/test
         sbt -v ++2.12.12! expectyJVM/test expectyJS/test
