@@ -1,5 +1,6 @@
 package expecty
 
 object Compat {
-    val isDotty = false
+  val isScala3 = false
+  val isDotty = isScala3
 }
