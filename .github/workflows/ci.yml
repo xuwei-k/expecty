@@ -33,10 +33,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt install clang libunwind-dev libgc-dev libre2-dev
-        sbt -v ++2.13.4! expectyJVM/test expectyJS/test
-        sbt -v ++3.0.0-M3! expectyJVM/test expectyJS/test
-        sbt -v ++2.12.12! expectyJVM/test expectyJS/test
-        sbt -v ++2.11.12! expectyNative/test
+        sbt -v test
         rm -rf "$HOME/.ivy2/local" || true
         find $HOME/Library/Caches/Coursier/v1        -name "ivydata-*.properties" -delete || true
         find $HOME/.ivy2/cache                       -name "ivydata-*.properties" -delete || true
