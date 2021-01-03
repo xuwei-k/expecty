@@ -8,6 +8,7 @@ val scala213 = "2.13.3"
 val scala3   = "3.0.0-M3"
 ThisBuild / scalaVersion := scala213
 ThisBuild / crossScalaVersions :=  Vector(scala212, scala213, scala211, scala3)
+Global / semanticdbEnabled := true
 
 lazy val root = (project in file("."))
   .aggregate(expectyJVM, expectyJS)
@@ -79,7 +80,10 @@ lazy val expectyJVM    = expecty.jvm
   //  .sourceDependency(utestJVMRef % Test, utestJVMLib % Test)
 lazy val expectyJS     = expecty.js
   //  .sourceDependency(utestJSRef % Test, utestJSLib % Test)
+
 lazy val expectyNative = expecty.native
-  // .settings(
-  //   libraryDependencies += "com.lihaoyi" %%% "utest" % utestVersion
-  // )
+  .settings(
+    scalaVersion := scala211,
+    bspEnabled := false,
+    // libraryDependencies += "com.lihaoyi" %%% "utest" % utestVersion
+  )
