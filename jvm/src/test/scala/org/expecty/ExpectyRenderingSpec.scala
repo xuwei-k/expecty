@@ -22,8 +22,8 @@ class ExpectyRenderingSpec {
   val assert = new Expecty() // (printAsts = true)
   val expect = new VarargsExpecty
 
-  import expecty.Compat.isDotty
-
+  import expecty.Compat.isScala3
+  def isScala2_13 = scala.util.Properties.versionNumberString.startsWith("2.13.")
 
   @Test
   def literals(): Unit = {
@@ -41,7 +41,7 @@ class ExpectyRenderingSpec {
 
   @Test
   def object_apply(): Unit = {
-    if (isDotty) {
+    if (isScala3 || isScala2_13) {
       outputs("""assertion failed
 
 List() == List(1, 2)
@@ -70,7 +70,7 @@ List() == List(1, 2)
 
   @Test
   def object_apply_2(): Unit = {
-    if (isDotty) {
+    if (isScala3 || isScala2_13) {
       outputs("""assertion failed
 
 List(1, 2) == List()
@@ -279,7 +279,7 @@ Person(Fred,42)
     val model = "M5"
 
 
-    if (isDotty) {
+    if (isScala3) {
       outputs("""assertion failed
 
 Car(brand, model).brand == "Audi"
@@ -329,7 +329,7 @@ BMW M5
 
   @Test
   def tuple(): Unit = {
-    if (isDotty) {
+    if (isScala3) {
       outputs("""assertion failed
 
 (1, 2)._1 == 3
@@ -450,7 +450,7 @@ Some(23) |  Some(22)
   @Test
   def message(): Unit = {
     val person = Person()
-    if (isDotty) {
+    if (isScala3) {
       outputs("""assertion failed: something something
 
 person.age == 43
@@ -475,7 +475,7 @@ assert(person.age == 43, "something something")
 
   @Test
   def literalsVarargs(): Unit = {
-    val maybeComma = if(isDotty) "" else ","
+    val maybeComma = if(isScala3) "" else ","
     outputs(s"""assertion failed
 
 "def".length() == 2$maybeComma
@@ -491,7 +491,7 @@ assert(person.age == 43, "something something")
   }
 
   def outputs(rendering: String)(expectation: => Unit): Unit = {
-    def normalize(s: String) = augmentString(s.trim()).lines.mkString
+    def normalize(s: String) = augmentString(s.trim()).linesIterator.toList.mkString
 
     try {
       expectation

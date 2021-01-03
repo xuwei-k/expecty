@@ -34,7 +34,7 @@ lazy val root = (project in file("."))
     },
   )
 
-lazy val utestVersion = "0.7.4"
+lazy val utestVersion = "0.7.5"
 lazy val utestJVMRef = ProjectRef(uri("git://github.com/eed3si9n/utest.git#79950544"), "utestJVM")
 lazy val utestJVMLib = "com.lihaoyi" %% "utest" % utestVersion
 lazy val utestJSRef = ProjectRef(uri("git://github.com/eed3si9n/utest.git#79950544"), "utestJS")
