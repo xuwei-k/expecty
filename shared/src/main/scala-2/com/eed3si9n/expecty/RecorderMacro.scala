@@ -96,8 +96,8 @@ Instrumented AST: ${showRaw(instrumented)}")
         Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")),
         termName(context)("recordExpression")),
       List(
-        context.literal(text).tree,
-        context.literal(ast).tree,
+        q"$text",
+        q"$ast",
         instrumented,
         getSourceLocation))
   }
@@ -176,7 +176,8 @@ object VarargsRecorderMacro {
 
 object RecorderMacro1 {
   def apply[R: context.WeakTypeTag, A: context.WeakTypeTag](context: Context)(recording: context.Tree): context.Expr[A] = {
-    new RecorderMacro[context.type](context).apply[R, A](recording, context.literal("").tree)
+    import context.universe._
+    new RecorderMacro[context.type](context).apply[R, A](recording, q"""""""")
   }
 }
 
