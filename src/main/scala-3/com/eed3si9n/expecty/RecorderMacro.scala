@@ -17,31 +17,31 @@ import scala.quoted._
 
 object RecorderMacro {
 
-  def apply[R: Type, A: Type](
-      recording: Expr[R],
-      listener: Expr[RecorderListener[R, A]])(using qctx: Quotes): Expr[A] = {
+  def apply[A: Type, R: Type](
+      recording: Expr[A],
+      listener: Expr[RecorderListener[A, R]])(using qctx: Quotes): Expr[R] = {
     apply(recording, '{""}, listener)
   }
 
-  def apply[R: Type, A: Type](
-      recording: Expr[R],
+  def apply[A: Type, R: Type](
+      recording: Expr[A],
       message: Expr[String],
-      listener: Expr[RecorderListener[R, A]])(using qctx: Quotes): Expr[A] = {
+      listener: Expr[RecorderListener[A, R]])(using qctx: Quotes): Expr[R] = {
     apply(Seq(recording), message, listener)
   }
 
-  def varargs[R: Type, A: Type](
-      recordings: Expr[Seq[R]],
-      listener: Expr[RecorderListener[R, A]])(using qctx: Quotes): Expr[A] = {
+  def varargs[A: Type, R: Type](
+      recordings: Expr[Seq[A]],
+      listener: Expr[RecorderListener[A, R]])(using qctx: Quotes): Expr[R] = {
     //!\ only works because we're expecting the macro to expand `R*`
     val Varargs(unTraversedRecordings) = recordings
     apply(unTraversedRecordings, '{""}, listener)
   }
 
-  def apply[R: Type, A: Type](
-      recordings: Seq[Expr[R]],
+  def apply[A: Type, R: Type](
+      recordings: Seq[Expr[A]],
       message: Expr[String],
-      listener: Expr[RecorderListener[R, A]])(using qctx0: Quotes): Expr[A] = {
+      listener: Expr[RecorderListener[A, R]])(using qctx0: Quotes): Expr[R] = {
     import qctx0.reflect._
     import util._
     val termArgs: Seq[Term] = recordings.map(_.asTerm.underlyingArgument)
@@ -74,7 +74,7 @@ object RecorderMacro {
 
     '{
       // import qctx0.reflect._
-      val recorderRuntime: RecorderRuntime[R, A] = new RecorderRuntime($listener)
+      val recorderRuntime: RecorderRuntime[A, R] = new RecorderRuntime($listener)
       recorderRuntime.recordMessage($message)
       ${
         val runtimeSym = TypeRepr.of[RecorderRuntime[_, _]].typeSymbol match {
@@ -195,7 +195,7 @@ object RecorderMacro {
         Block(
           termArgs.toList.flatMap(recordExpressions),
           '{ recorderRuntime.completeRecording() }.asTerm
-        ).asExprOf[A]
+        ).asExprOf[R]
       }
     }
   }

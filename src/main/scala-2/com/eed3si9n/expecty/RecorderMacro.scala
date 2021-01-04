@@ -19,26 +19,26 @@ import scala.util.Properties
 class RecorderMacro[C <: Context](val context: C) {
   import context.universe._
 
-  def apply[R: context.WeakTypeTag, A: context.WeakTypeTag](recording: context.Tree, message: context.Tree): Expr[A] = {
-    context.Expr(Block(declareRuntime[R, A] ::
+  def apply[A: context.WeakTypeTag, R: context.WeakTypeTag](recording: context.Tree, message: context.Tree): Expr[R] = {
+    context.Expr(Block(declareRuntime[A, R] ::
       recordMessage(message) ::
       recordExpressions(recording),
       completeRecording))
   }
 
-  def all[R: context.WeakTypeTag, A: context.WeakTypeTag](recordings: Seq[context.Tree]): Expr[A] = {
+  def all[A: context.WeakTypeTag, R: context.WeakTypeTag](recordings: Seq[context.Tree]): Expr[R] = {
     context.Expr(Block(
-      declareRuntime[R, A] ::
+      declareRuntime[A, R] ::
       recordings.toList.flatMap(recordExpressions),
       completeRecording))
   }
 
-  private[this] def declareRuntime[R: context.WeakTypeTag, A : context.WeakTypeTag] : Tree = {
+  private[this] def declareRuntime[A: context.WeakTypeTag, R : context.WeakTypeTag] : Tree = {
     val runtimeClass = context.mirror.staticClass(classOf[RecorderRuntime[_, _]].getName())
     ValDef(
       Modifiers(),
       termName(context)("$com_eed3si9n_expecty_recorderRuntime"),
-      TypeTree(weakTypeOf[RecorderRuntime[R, A]]),
+      TypeTree(weakTypeOf[RecorderRuntime[A, R]]),
       Apply(
         Select(
           New(Ident(runtimeClass)),
@@ -170,20 +170,20 @@ Instrumented AST: ${showRaw(instrumented)}")
 }
 
 object VarargsRecorderMacro {
-  def apply[R: context.WeakTypeTag, A: context.WeakTypeTag](context: Context)(recordings: context.Tree*): context.Expr[A] = {
-    new RecorderMacro[context.type](context).all[R, A](recordings)
+  def apply[A: context.WeakTypeTag, R: context.WeakTypeTag](context: Context)(recordings: context.Tree*): context.Expr[R] = {
+    new RecorderMacro[context.type](context).all[A, R](recordings)
   }
 }
 
 object RecorderMacro1 {
-  def apply[R: context.WeakTypeTag, A: context.WeakTypeTag](context: Context)(recording: context.Tree): context.Expr[A] = {
+  def apply[A: context.WeakTypeTag, R: context.WeakTypeTag](context: Context)(recording: context.Tree): context.Expr[R] = {
     import context.universe._
-    new RecorderMacro[context.type](context).apply[R, A](recording, q"""""""")
+    new RecorderMacro[context.type](context).apply[A, R](recording, q"""""""")
   }
 }
 
 object RecorderMacro {
-  def apply[R: context.WeakTypeTag, A : context.WeakTypeTag](context: Context)(recording: context.Tree, message: context.Tree): context.Expr[A] = {
-    new RecorderMacro[context.type](context).apply[R, A](recording, message)
+  def apply[A: context.WeakTypeTag, R: context.WeakTypeTag](context: Context)(recording: context.Tree, message: context.Tree): context.Expr[R] = {
+    new RecorderMacro[context.type](context).apply[A, R](recording, message)
   }
 }
