@@ -19,6 +19,7 @@ abstract class Recorder[R, A] {
   def listener: RecorderListener[R, A]
 }
 
+// format: off
 trait UnaryRecorder[R, A] { self: Recorder[R, A] =>
   inline def apply(recording: R): A =
     ${ RecorderMacro.apply('recording, 'listener) }
@@ -30,3 +31,4 @@ trait VarargsRecorder[R, A] { self: Recorder[R, A] =>
   inline def apply(inline recordings: R*): A =
     ${ RecorderMacro.varargs('recordings, 'listener)}
 }
+// format: on

@@ -1,16 +1,16 @@
 /*
-* Copyright 2021 the original author or authors.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*     http://www.apache.org/licenses/LICENSE-2.0
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2021 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 
 package com.eed3si9n.expecty
 
@@ -85,9 +85,8 @@ object DiffUtil {
       actual
         .padTo(expected.length, "")
         .zip(expected.padTo(actual.length, ""))
-        .map {
-          case (act, exp) =>
-            mkColoredLineDiff(exp, act)
+        .map { case (act, exp) =>
+          mkColoredLineDiff(exp, act)
         }
 
     padDiffs(diffs).mkString(System.lineSeparator)
@@ -98,10 +97,9 @@ object DiffUtil {
     def textLength(str: String): Int = str.replaceAll("\u001b\\[[\\d;]*[^\\d;]", "").length
     val expectedSize = EOF.length max textLength(diffs.maxBy(diff => textLength(diff._1))._1)
     println(expectedSize)
-    diffs map {
-      case (expected, found) =>
-        val pad = " " * 0.max(expectedSize - textLength(expected))
-        expected + pad + "  |  " + found
+    diffs map { case (expected, found) =>
+      val pad = " " * 0.max(expectedSize - textLength(expected))
+      expected + pad + "  |  " + found
     }
   }
 
@@ -184,8 +182,8 @@ object DiffUtil {
         val (x1, x2) = x.splitAt(xmid)
         val leftScore = nwScore(x1, y)
         val rightScore = nwScore(x2.reverse, y.reverse)
-        val scoreSum = (leftScore zip rightScore.reverse).map {
-          case (left, right) => left + right
+        val scoreSum = (leftScore zip rightScore.reverse).map { case (left, right) =>
+          left + right
         }
         val max = scoreSum.max
         val ymid = scoreSum.indexOf(max)
