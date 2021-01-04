@@ -15,188 +15,192 @@ package com.eed3si9n.expecty
 
 import scala.quoted._
 
-object RecorderMacro {
+class RecorderMacro(using qctx0: Quotes) {
+  // https://github.com/lampepfl/dotty/releases/tag/3.0.0-M2
+  // https://dotty.epfl.ch/docs/reference/metaprogramming/tasty-reflect.html#sealing-and-unsealing
+  import qctx0.reflect._
+  import util._
 
-  def apply[A: Type, R: Type](
-      recording: Expr[A],
-      listener: Expr[RecorderListener[A, R]])(using qctx: Quotes): Expr[R] = {
-    apply(recording, '{""}, listener)
-  }
-
-  def apply[A: Type, R: Type](
-      recording: Expr[A],
-      message: Expr[String],
-      listener: Expr[RecorderListener[A, R]])(using qctx: Quotes): Expr[R] = {
-    apply(Seq(recording), message, listener)
-  }
-
-  def varargs[A: Type, R: Type](
-      recordings: Expr[Seq[A]],
-      listener: Expr[RecorderListener[A, R]])(using qctx: Quotes): Expr[R] = {
-    //!\ only works because we're expecting the macro to expand `R*`
-    val Varargs(unTraversedRecordings) = recordings
-    apply(unTraversedRecordings, '{""}, listener)
-  }
+  private[this] val runtimeSym: Symbol = TypeRepr.of[RecorderRuntime[_, _]].typeSymbol
 
   def apply[A: Type, R: Type](
       recordings: Seq[Expr[A]],
       message: Expr[String],
       listener: Expr[RecorderListener[A, R]])(using qctx0: Quotes): Expr[R] = {
-    import qctx0.reflect._
-    import util._
     val termArgs: Seq[Term] = recordings.map(_.asTerm.underlyingArgument)
 
-    def getSourceCode(expr: Tree): String = {
-      val pos = expr.pos
-      (" " * pos.startColumn) + pos.sourceCode.get
-    }
-
-    def getSourceLocation(expr: Tree) = {
-      val pos = expr.pos
-
-      val pwd  = java.nio.file.Paths.get("").toAbsolutePath
-      val line = Expr(pos.endLine)
-
-      val path = pos.sourceFile.jpath
-      if (path != null){
-        val file = path.toFile
-
-        val pathExpr = Expr(path.toString)
-        val relativePath = Expr(pwd.relativize(path).toString())
-        val fileName = Expr(file.getName)
-
-        '{Location(${pathExpr}, ${relativePath}, ${line})}.asTerm
-      } else {
-        '{Location("<virtual>", "<virtual>", ${line})}.asTerm
-      }
-    }
-
-
     '{
-      // import qctx0.reflect._
       val recorderRuntime: RecorderRuntime[A, R] = new RecorderRuntime($listener)
       recorderRuntime.recordMessage($message)
       ${
-        val runtimeSym = TypeRepr.of[RecorderRuntime[_, _]].typeSymbol match {
-          case sym if sym.isClassDef => sym
-        }
-        val recordExpressionSel: Term = {
-          val m = runtimeSym.memberMethod("recordExpression").head
-          '{ recorderRuntime }.asTerm.select(m)
-        }
-        val recordValueSel: Term = {
-          val m = runtimeSym.memberMethod("recordValue").head
-          '{ recorderRuntime }.asTerm.select(m)
-        }
-
-        def recordExpressions(recording: Term): List[Term] = {
-          val source = getSourceCode(recording)
-          val ast = recording.show(using Printer.TreeStructure)
-          val sourceLoc = getSourceLocation(recording)
-          try {
-            List(
-              '{ recorderRuntime.resetValues() }.asTerm,
-              recordExpression(source, ast, recording, sourceLoc)
-            )
-          } catch {
-            case e: Throwable => throw new RuntimeException(
-              "Expecty: Error rewriting expression.\nText: " + source + "\nAST : " + ast, e)
-          }
-        }
-
-        // emit recorderRuntime.recordExpression(<source>, <tree>, instrumented)
-        def recordExpression(source: String, ast: String, expr: Term, loc: Term): Term = {
-          val instrumented = recordAllValues(expr)
-          Apply(recordExpressionSel,
-            List(
-              Literal(StringConstant(source)),
-              Literal(StringConstant(ast)),
-              instrumented,
-              loc
-            ))
-        }
-
-        def recordAllValues(expr: Term): Term =
-          expr match {
-            case New(_)     => expr
-            case Literal(_) => expr
-            case Typed(r @ Repeated(xs, y), tpe) => Typed.copy(r)(recordSubValues(r), tpe)
-            // don't record value of implicit "this" added by compiler; couldn't find a better way to detect implicit "this" than via point
-            case Select(x@This(_), y) if expr.pos.start == x.pos.start => expr
-            // case x: Select if x.symbol.isModule => expr // don't try to record the value of packages
-            case _ => recordValue(recordSubValues(expr), expr)
-          }
-
-        def recordSubValues(expr: Term): Term =
-          expr match {
-            case Apply(x, ys) =>
-              try {
-                Apply(recordAllValues(x), ys.map(recordAllValues))
-              } catch {
-                case e: AssertionError => expr
-              }
-            // case TypeApply(x, ys) => recordValue(TypeApply.copy(expr)(recordSubValues(x), ys), expr)
-            case TypeApply(x, ys) => TypeApply.copy(expr)(recordSubValues(x), ys)
-            case Select(x, y)     => Select.copy(expr)(recordAllValues(x), y)
-            case Typed(x, tpe)    => Typed.copy(expr)(recordSubValues(x), tpe)
-            case Repeated(xs, y)  => Repeated.copy(expr)(xs.map(recordAllValues), y)
-            case _                => expr
-          }
-
-        def recordValue(expr: Term, origExpr: Term): Term = {
-          // debug
-          // println("recording " + expr.showExtractors + " at " + getAnchor(expr))
-
-          def skipIdent(sym: Symbol): Boolean =
-            sym match {
-              case sym if sym.isDefDef => sym.signature.paramSigs.nonEmpty
-              case _ =>
-                sym.fullName match {
-                  case "scala" | "java" => true
-                  case fullName if fullName.startsWith("scala.") => true
-                  case fullName if fullName.startsWith("java.")  => true
-                  case _ => false
-                }
-            }
-
-          def skipSelect(sym: Symbol): Boolean =
-            (sym match {
-              case sym if sym.isDefDef => skipIdent(sym)
-              case sym if sym.isValDef => skipIdent(sym)
-              case _ => true
-            })
-          expr match {
-            case Select(_, _) if skipSelect(expr.symbol) => expr
-            case TypeApply(_, _) => expr
-            case Ident(_) if skipIdent(expr.symbol) => expr
-            case _ =>
-              val tapply = recordValueSel.appliedToType(expr.tpe)
-              Apply.copy(expr)(
-                tapply,
-                List(
-                  expr,
-                  Literal(IntConstant(getAnchor(expr)))
-                )
-              )
-          }
-        }
-
-        def getAnchor(expr: Term): Int =
-          expr match {
-            case Apply(x, ys) if x.symbol.fullName == "com.eed3si9n.expecty.RecorderRuntime.recordValue" && ys.nonEmpty =>
-              getAnchor(ys.head)
-            case Apply(x, ys)     => getAnchor(x) + 0
-            case TypeApply(x, ys) => getAnchor(x) + 0
-            case Select(x, y)     =>
-              expr.pos.startColumn + math.max(0, expr.pos.sourceCode.get.indexOf(y))
-            case _                => expr.pos.startColumn
-          }
-
         Block(
-          termArgs.toList.flatMap(recordExpressions),
+          termArgs.toList.flatMap(recordExpressions('{ recorderRuntime }.asTerm, _)),
           '{ recorderRuntime.completeRecording() }.asTerm
         ).asExprOf[R]
       }
     }
+  }
+
+  private[this] def getSourceLocation(expr: Tree) = {
+    val pos = expr.pos
+
+    val pwd  = java.nio.file.Paths.get("").toAbsolutePath
+    val line = Expr(pos.endLine)
+
+    val path = pos.sourceFile.jpath
+    if (path != null){
+      val file = path.toFile
+
+      val pathExpr = Expr(path.toString)
+      val relativePath = Expr(pwd.relativize(path).toString())
+      val fileName = Expr(file.getName)
+
+      '{Location(${pathExpr}, ${relativePath}, ${line})}.asTerm
+    } else {
+      '{Location("<virtual>", "<virtual>", ${line})}.asTerm
+    }
+  }
+
+  private[this] def recordExpressions(runtime: Term, recording: Term): List[Term] = {
+    val source = getSourceCode(recording)
+    val ast = recording.show(using Printer.TreeStructure)
+    val sourceLoc = getSourceLocation(recording)
+
+    val resetValuesSel: Term = {
+      val m = runtimeSym.memberMethod("resetValues").head
+      runtime.select(m)
+    }
+    try {
+      List(
+        Apply(resetValuesSel, List()),
+        recordExpression(runtime, source, ast, recording, sourceLoc)
+      )
+    } catch {
+      case e: Throwable => throw new RuntimeException(
+        "Expecty: Error rewriting expression.\nText: " + source + "\nAST : " + ast, e)
+    }
+  }
+
+  // emit recorderRuntime.recordExpression(<source>, <tree>, instrumented)
+  private[this] def recordExpression(runtime: Term, source: String, ast: String, expr: Term, loc: Term): Term = {
+    val instrumented = recordAllValues(runtime, expr)
+    val recordExpressionSel: Term = {
+      val m = runtimeSym.memberMethod("recordExpression").head
+      runtime.select(m)
+    }
+    Apply(recordExpressionSel,
+      List(
+        Literal(StringConstant(source)),
+        Literal(StringConstant(ast)),
+        instrumented,
+        loc
+      ))
+  }
+
+  private[this] def recordAllValues(runtime: Term, expr: Term): Term =
+    expr match {
+      case New(_)     => expr
+      case Literal(_) => expr
+      case Typed(r @ Repeated(xs, y), tpe) => Typed.copy(r)(recordSubValues(runtime, r), tpe)
+      // don't record value of implicit "this" added by compiler; couldn't find a better way to detect implicit "this" than via point
+      case Select(x@This(_), y) if expr.pos.start == x.pos.start => expr
+      // case x: Select if x.symbol.isModule => expr // don't try to record the value of packages
+      case _ => recordValue(runtime, recordSubValues(runtime, expr), expr)
+    }
+
+  private[this] def recordSubValues(runtime: Term, expr: Term): Term =
+    expr match {
+      case Apply(x, ys) =>
+        try {
+          Apply(recordAllValues(runtime, x), ys.map(recordAllValues(runtime, _)))
+        } catch {
+          case e: AssertionError => expr
+        }
+      // case TypeApply(x, ys) => recordValue(TypeApply.copy(expr)(recordSubValues(x), ys), expr)
+      case TypeApply(x, ys) => TypeApply.copy(expr)(recordSubValues(runtime, x), ys)
+      case Select(x, y)     => Select.copy(expr)(recordAllValues(runtime, x), y)
+      case Typed(x, tpe)    => Typed.copy(expr)(recordSubValues(runtime, x), tpe)
+      case Repeated(xs, y)  => Repeated.copy(expr)(xs.map(recordAllValues(runtime, _)), y)
+      case _                => expr
+    }
+
+  private[this] def recordValue(runtime: Term, expr: Term, origExpr: Term): Term = {
+    // debug
+    // println("recording " + expr.showExtractors + " at " + getAnchor(expr))
+    val recordValueSel: Term = {
+      val m = runtimeSym.memberMethod("recordValue").head
+      runtime.select(m)
+    }
+    def skipIdent(sym: Symbol): Boolean =
+      sym match {
+        case sym if sym.isDefDef => sym.signature.paramSigs.nonEmpty
+        case _ =>
+          sym.fullName match {
+            case "scala" | "java" => true
+            case fullName if fullName.startsWith("scala.") => true
+            case fullName if fullName.startsWith("java.")  => true
+            case _ => false
+          }
+      }
+
+    def skipSelect(sym: Symbol): Boolean =
+      (sym match {
+        case sym if sym.isDefDef => skipIdent(sym)
+        case sym if sym.isValDef => skipIdent(sym)
+        case _ => true
+      })
+    expr match {
+      case Select(_, _) if skipSelect(expr.symbol) => expr
+      case TypeApply(_, _) => expr
+      case Ident(_) if skipIdent(expr.symbol) => expr
+      case _ =>
+        val tapply = recordValueSel.appliedToType(expr.tpe)
+        Apply.copy(expr)(
+          tapply,
+          List(
+            expr,
+            Literal(IntConstant(getAnchor(expr)))
+          )
+        )
+    }
+  }
+
+  private[this] def getSourceCode(expr: Tree): String = {
+    val pos = expr.pos
+    (" " * pos.startColumn) + pos.sourceCode.get
+  }
+
+  private[this] def getAnchor(expr: Term): Int =
+    expr match {
+      case Apply(x, ys) if x.symbol.fullName == "com.eed3si9n.expecty.RecorderRuntime.recordValue" && ys.nonEmpty =>
+        getAnchor(ys.head)
+      case Apply(x, ys)     => getAnchor(x) + 0
+      case TypeApply(x, ys) => getAnchor(x) + 0
+      case Select(x, y)     =>
+        expr.pos.startColumn + math.max(0, expr.pos.sourceCode.get.indexOf(y))
+      case _                => expr.pos.startColumn
+    }
+}
+
+object RecorderMacro {
+  def apply[A: Type, R: Type](
+      recording: Expr[A],
+      listener: Expr[RecorderListener[A, R]])(using qctx: Quotes): Expr[R] =
+    new RecorderMacro().apply(Seq(recording), '{""}, listener)
+
+  /** captures a method invocation in the shape of assert(expr, message). */
+  def apply[A: Type, R: Type](
+      recording: Expr[A],
+      message: Expr[String],
+      listener: Expr[RecorderListener[A, R]])(using qctx: Quotes): Expr[R] =
+    new RecorderMacro().apply(Seq(recording), message, listener)
+
+  def varargs[A: Type, R: Type](
+      recordings: Expr[Seq[A]],
+      listener: Expr[RecorderListener[A, R]])(using qctx: Quotes): Expr[R] = {
+    import qctx.reflect._
+    //!\ only works because we're expecting the macro to expand `R*`
+    val Varargs(unTraversedRecordings) = recordings
+    new RecorderMacro().apply(unTraversedRecordings, '{""}, listener)
   }
 }
