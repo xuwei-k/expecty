@@ -13,6 +13,7 @@ lazy val root = (project in file("."))
   .settings(
     name := "Expecty Root",   
     Compile / sources := Nil,
+    Test / sources := Nil,
     publish / skip := true,
     commands += Command.command("release") { state =>
       "clean" ::
@@ -45,11 +46,7 @@ lazy val expecty = (projectMatrix in file("."))
   .jvmPlatform(scalaVersions = Seq(scala213, scala212, scala211, scala3), settings = Seq(
     libraryDependencies += "com.novocode" % "junit-interface" % "0.11" % Test,
     Test / unmanagedSourceDirectories ++= {
-      Seq((baseDirectory in LocalRootProject).value / "jvm" / "src" / "test" / "scala") ++
-      (CrossVersion.partialVersion(scalaVersion.value) match {
-        case Some((2, _)) => Seq((baseDirectory in LocalRootProject).value / "jvm" / "src" / "test" / "scala-2")
-        case _ => Seq((baseDirectory in LocalRootProject).value / "jvm" / "src" / "test" / "scala-3")
-      })
+      Seq((baseDirectory in LocalRootProject).value / "jvm" / "src" / "test" / "scala")
     },
   ))
   .jsPlatform(scalaVersions = Seq(scala213, scala212, scala3))

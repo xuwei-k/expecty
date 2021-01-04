@@ -147,16 +147,20 @@ object RecorderMacro {
           // println("recording " + expr.showExtractors + " at " + getAnchor(expr))
 
           def skipIdent(sym: Symbol): Boolean =
-            sym.fullName match {
-              case "scala" | "java" => true
-              case fullName if fullName.startsWith("scala.") => true
-              case fullName if fullName.startsWith("java.")  => true
-              case _ => false
+            sym match {
+              case sym if sym.isDefDef => sym.signature.paramSigs.nonEmpty
+              case _ =>
+                sym.fullName match {
+                  case "scala" | "java" => true
+                  case fullName if fullName.startsWith("scala.") => true
+                  case fullName if fullName.startsWith("java.")  => true
+                  case _ => false
+                }
             }
 
           def skipSelect(sym: Symbol): Boolean =
             (sym match {
-              case sym if sym.isDefDef => sym.signature.paramSigs.nonEmpty
+              case sym if sym.isDefDef => skipIdent(sym)
               case sym if sym.isValDef => skipIdent(sym)
               case _ => true
             })
