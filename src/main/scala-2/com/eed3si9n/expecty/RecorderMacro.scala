@@ -1,16 +1,16 @@
 /*
-* Copyright 2012 the original author or authors.
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*     http://www.apache.org/licenses/LICENSE-2.0
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
+ * Copyright 2012 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.eed3si9n.expecty
 
 import compat._
@@ -21,17 +21,24 @@ class RecorderMacro[C <: Context](val context: C) {
 
   /** captures a method invocation in the shape of assert(expr, message). */
   def apply[A: context.WeakTypeTag, R: context.WeakTypeTag](recording: context.Tree, message: context.Tree): Expr[R] = {
-    context.Expr(Block(declareRuntime[A, R] ::
-      recordMessage(message) ::
-      recordExpressions(recording),
-      completeRecording))
+    context.Expr(
+      Block(
+        declareRuntime[A, R] ::
+          recordMessage(message) ::
+          recordExpressions(recording),
+        completeRecording
+      )
+    )
   }
 
   def all[A: context.WeakTypeTag, R: context.WeakTypeTag](recordings: Seq[context.Tree]): Expr[R] = {
-    context.Expr(Block(
-      declareRuntime[A, R] ::
-      recordings.toList.flatMap(recordExpressions),
-      completeRecording))
+    context.Expr(
+      Block(
+        declareRuntime[A, R] ::
+          recordings.toList.flatMap(recordExpressions),
+        completeRecording
+      )
+    )
   }
 
   /** captures a method invocation in the shape of assertEquals(expected, found). */
@@ -64,20 +71,17 @@ class RecorderMacro[C <: Context](val context: C) {
     )
   }
 
-  private[this] def declareRuntime[A: context.WeakTypeTag, R : context.WeakTypeTag] : Tree = {
+  private[this] def declareRuntime[A: context.WeakTypeTag, R: context.WeakTypeTag]: Tree = {
     val runtimeClass = context.mirror.staticClass(classOf[RecorderRuntime[_, _]].getName())
     ValDef(
       Modifiers(),
       termName(context)("$com_eed3si9n_expecty_recorderRuntime"),
       TypeTree(weakTypeOf[RecorderRuntime[A, R]]),
       Apply(
-        Select(
-          New(Ident(runtimeClass)),
-          termNames.CONSTRUCTOR),
-        List(
-          Select(
-            context.prefix.tree,
-            termName(context)("listener")))))
+        Select(New(Ident(runtimeClass)), termNames.CONSTRUCTOR),
+        List(Select(context.prefix.tree, termName(context)("listener")))
+      )
+    )
   }
 
   private[this] def recordExpressions(recording: Tree): List[Tree] = {
@@ -86,94 +90,91 @@ class RecorderMacro[C <: Context](val context: C) {
     try {
       List(resetValues, recordExpression(source, ast, recording))
     } catch {
-      case e: Throwable => throw new RuntimeException(
-        "Expecty: Error rewriting expression.\nText: " + source + "\nAST : " + ast, e)
+      case e: Throwable =>
+        throw new RuntimeException("Expecty: Error rewriting expression.\nText: " + source + "\nAST : " + ast, e)
     }
   }
 
   private[this] def recordMessage(message: Tree): Tree =
     Apply(
-      Select(
-        Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")),
-        termName(context)("recordMessage")),
-      List(message))
+      Select(Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")), termName(context)("recordMessage")),
+      List(message)
+    )
 
   private[this] def completeRecording: Tree =
     Apply(
-      Select(
-        Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")),
-        termName(context)("completeRecording")),
-      List())
-
+      Select(Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")), termName(context)("completeRecording")),
+      List()
+    )
 
   private[this] def resetValues: Tree =
     Apply(
-      Select(
-        Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")),
-        termName(context)("resetValues")),
-      List())
+      Select(Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")), termName(context)("resetValues")),
+      List()
+    )
 
   // emit recorderRuntime.recordExpression(<source>, <tree>, instrumented)
   private[this] def recordExpression(source: String, ast: String, expr: Tree) = {
     val instrumented = recordAllValues(expr)
-    log(expr, s"""
+    log(
+      expr,
+      s"""
 Expression      : ${source.trim()}
 Original AST    : $ast
 Instrumented AST: ${showRaw(instrumented)}")
 
-    """)
+    """
+    )
 
     Apply(
-      Select(
-        Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")),
-        termName(context)("recordExpression")),
-      List(
-        q"$source",
-        q"$ast",
-        instrumented,
-        getSourceLocation))
+      Select(Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")), termName(context)("recordExpression")),
+      List(q"$source", q"$ast", instrumented, getSourceLocation)
+    )
   }
 
-  private[this] def splitExpressions(recording: Tree): List[Tree] = recording match {
-    case Block(xs, y) => xs ::: List(y)
-    case _            => List(recording)
-  }
+  private[this] def splitExpressions(recording: Tree): List[Tree] =
+    recording match {
+      case Block(xs, y) => xs ::: List(y)
+      case _            => List(recording)
+    }
 
-  private[this] def recordAllValues(expr: Tree): Tree = expr match {
-    case New(_) => expr // only record after ctor call
-    case Literal(_) => expr // don't record
-    // don't record value of implicit "this" added by compiler; couldn't find a better way to detect implicit "this" than via point
-    case Select(x@This(_), y) if getPosition(expr).point == getPosition(x).point => expr
-    case x: Select if x.symbol.isModule => expr // don't try to record the value of packages
-    case _ => recordValue(recordSubValues(expr), expr)
-  }
+  private[this] def recordAllValues(expr: Tree): Tree =
+    expr match {
+      case New(_)     => expr // only record after ctor call
+      case Literal(_) => expr // don't record
+      // don't record value of implicit "this" added by compiler; couldn't find a better way to detect implicit "this" than via point
+      case Select(x @ This(_), y) if getPosition(expr).point == getPosition(x).point => expr
+      case x: Select if x.symbol.isModule                                            => expr // don't try to record the value of packages
+      case _                                                                         => recordValue(recordSubValues(expr), expr)
+    }
 
-  private[this] def recordSubValues(expr: Tree) : Tree = expr match {
-    case Apply(x, ys) => Apply(recordAllValues(x), ys.map(recordAllValues))
-    case TypeApply(x, ys) => TypeApply(recordSubValues(x), ys)
-    case Select(x, y) => Select(recordAllValues(x), y)
-    case _ => expr
-  }
+  private[this] def recordSubValues(expr: Tree): Tree =
+    expr match {
+      case Apply(x, ys)     => Apply(recordAllValues(x), ys.map(recordAllValues))
+      case TypeApply(x, ys) => TypeApply(recordSubValues(x), ys)
+      case Select(x, y)     => Select(recordAllValues(x), y)
+      case _                => expr
+    }
 
   private[this] def recordValue(expr: Tree, origExpr: Tree): Tree =
     if (origExpr.tpe.typeSymbol.isType)
       Apply(
-        Select(
-          Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")),
-          termName(context)("recordValue")),
-        List(expr, Literal(Constant(getAnchor(origExpr)))))
+        Select(Ident(termName(context)("$com_eed3si9n_expecty_recorderRuntime")), termName(context)("recordValue")),
+        List(expr, Literal(Constant(getAnchor(origExpr))))
+      )
     else expr
 
   private[this] def getSourceCode(expr: Tree): String = getPosition(expr).lineContent
 
-  private[this] def getAnchor(expr: Tree): Int = expr match {
-    case Apply(x, ys) => getAnchor(x) + 0
-    case TypeApply(x, ys) => getAnchor(x) + 0
-    case _ => {
-      val pos = getPosition(expr)
-      pos.point - pos.source.lineToOffset(pos.line - 1)
+  private[this] def getAnchor(expr: Tree): Int =
+    expr match {
+      case Apply(x, ys)     => getAnchor(x) + 0
+      case TypeApply(x, ys) => getAnchor(x) + 0
+      case _ => {
+        val pos = getPosition(expr)
+        pos.point - pos.source.lineToOffset(pos.line - 1)
+      }
     }
-  }
 
   private[this] def getPosition(expr: Tree) = expr.pos.asInstanceOf[scala.reflect.internal.util.Position]
 
@@ -184,11 +185,11 @@ Instrumented AST: ${showRaw(instrumented)}")
   private def getSourceLocation = {
     import context.universe._
 
-    val pwd  = java.nio.file.Paths.get("").toAbsolutePath
+    val pwd = java.nio.file.Paths.get("").toAbsolutePath
     val p = context.enclosingPosition.source.path
     val abstractFile = context.enclosingPosition.source.file
 
-    val rp = if (!abstractFile.isVirtual){
+    val rp = if (!abstractFile.isVirtual) {
       pwd.relativize(abstractFile.file.toPath()).toString()
     } else p
 
@@ -201,20 +202,26 @@ Instrumented AST: ${showRaw(instrumented)}")
 }
 
 object VarargsRecorderMacro {
-  def apply[A: context.WeakTypeTag, R: context.WeakTypeTag](context: Context)(recordings: context.Tree*): context.Expr[R] = {
+  def apply[A: context.WeakTypeTag, R: context.WeakTypeTag](
+      context: Context
+  )(recordings: context.Tree*): context.Expr[R] = {
     new RecorderMacro[context.type](context).all[A, R](recordings)
   }
 }
 
 object RecorderMacro1 {
-  def apply[A: context.WeakTypeTag, R: context.WeakTypeTag](context: Context)(recording: context.Tree): context.Expr[R] = {
+  def apply[A: context.WeakTypeTag, R: context.WeakTypeTag](
+      context: Context
+  )(recording: context.Tree): context.Expr[R] = {
     import context.universe._
     new RecorderMacro[context.type](context).apply[A, R](recording, q"""""""")
   }
 }
 
 object RecorderMacro {
-  def apply[A: context.WeakTypeTag, R: context.WeakTypeTag](context: Context)(recording: context.Tree, message: context.Tree): context.Expr[R] = {
+  def apply[A: context.WeakTypeTag, R: context.WeakTypeTag](
+      context: Context
+  )(recording: context.Tree, message: context.Tree): context.Expr[R] = {
     new RecorderMacro[context.type](context).apply[A, R](recording, message)
   }
 }
@@ -235,4 +242,3 @@ object StringRecorderMacroMessage {
     new RecorderMacro[context.type](context).apply2[A, R](expected, found, message)
   }
 }
-
