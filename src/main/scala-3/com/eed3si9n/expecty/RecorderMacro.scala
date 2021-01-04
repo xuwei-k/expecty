@@ -46,7 +46,7 @@ object RecorderMacro {
     import util._
     val termArgs: Seq[Term] = recordings.map(_.asTerm.underlyingArgument)
 
-    def getText(expr: Tree): String = {
+    def getSourceCode(expr: Tree): String = {
       val pos = expr.pos
       (" " * pos.startColumn) + pos.sourceCode.get
     }
@@ -90,25 +90,25 @@ object RecorderMacro {
         }
 
         def recordExpressions(recording: Term): List[Term] = {
-          val text = getText(recording)
+          val source = getSourceCode(recording)
           val ast = recording.show(using Printer.TreeStructure)
           val sourceLoc = getSourceLocation(recording)
           try {
             List(
               '{ recorderRuntime.resetValues() }.asTerm,
-              recordExpression(text, ast, recording, sourceLoc)
+              recordExpression(source, ast, recording, sourceLoc)
             )
           } catch {
             case e: Throwable => throw new RuntimeException(
-              "Expecty: Error rewriting expression.\nText: " + text + "\nAST : " + ast, e)
+              "Expecty: Error rewriting expression.\nText: " + source + "\nAST : " + ast, e)
           }
         }
 
-        def recordExpression(text: String, ast: String, expr: Term, loc: Term): Term = {
+        def recordExpression(source: String, ast: String, expr: Term, loc: Term): Term = {
           val instrumented = recordAllValues(expr)
           Apply(recordExpressionSel,
             List(
-              Literal(StringConstant(text)),
+              Literal(StringConstant(source)),
               Literal(StringConstant(ast)),
               instrumented,
               loc
