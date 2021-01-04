@@ -16,9 +16,9 @@ package com.eed3si9n.expecty
 import collection.mutable.ListBuffer
 import collection.immutable.TreeMap
 
-class ExpressionRenderer(showTypes: Boolean) {
+class ExpressionRenderer(showTypes: Boolean, shortString: Boolean) {
   def render(recordedExpr: RecordedExpression[_]): String = {
-    val offset = recordedExpr.text.prefixLength(_.isWhitespace)
+    val offset = recordedExpr.text.segmentLength(_.isWhitespace, 0)
     val intro = new StringBuilder().append(recordedExpr.text.trim())
     val lines = ListBuffer(new StringBuilder)
 
@@ -53,21 +53,27 @@ class ExpressionRenderer(showTypes: Boolean) {
 
     placeString(lines(0), "|", col)
 
-    for (line <- lines.drop(1)) {
-      if (fits(line, str, col)) {
-        placeString(line, str, col)
-        return
+    import util.control.Breaks._
+    breakable {
+      for (line <- lines.drop(1)) {
+        if (fits(line, str, col)) {
+          placeString(line, str, col)
+          break()
+        }
+        placeString(line, "|", col)
       }
-      placeString(line, "|", col)
+      val newLine = new StringBuilder()
+      placeString(newLine, str, col)
+      lines.append(newLine)
     }
-
-    val newLine = new StringBuilder()
-    placeString(newLine, str, col)
-    lines.append(newLine)
   }
 
   private[this] def renderValue(value: Any): String = {
-    val str = if (value == null) "null" else value.toString
+    val str0 = if (value == null) "null" else value.toString
+    val str =
+      if (!shortString) str0
+      else if (str0.contains("\n")) str0.linesIterator.toList.headOption.getOrElse("") + "..."
+      else str0
     if (showTypes) str + " (" + value.getClass.getName + ")" // TODO: get type name the Scala way
     else str
   }

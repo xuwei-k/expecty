@@ -13,17 +13,8 @@
 */
 package com.eed3si9n.expecty
 
-import language.experimental.macros
-
-abstract class Recorder[R, A] {
-  def listener: RecorderListener[R, A]
-}
-
-trait UnaryRecorder[R, A] { self : Recorder[R, A] =>
-  def apply(recording: R): A = macro RecorderMacro1.apply[R, A]
-  def apply(recording: R, message: => String): A = macro RecorderMacro.apply[R, A]
-}
-
-trait VarargsRecorder[R, A] { self : Recorder[R, A] =>
-  def apply(recordings: R*) : A = macro VarargsRecorderMacro.apply[R, A]
+trait RecorderListener[A, R] {
+  def valueRecorded(recordedValue: RecordedValue): Unit = {}
+  def expressionRecorded(recordedExpr: RecordedExpression[A], recordedMessage: Function0[String]): Unit = {}
+  def recordingCompleted(recording: Recording[A], recordedMessage: Function0[String]): R
 }
