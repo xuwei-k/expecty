@@ -82,6 +82,7 @@ class RecorderMacro[C <: Context](val context: C) {
         termName(context)("resetValues")),
       List())
 
+  // emit recorderRuntime.recordExpression(<source>, <tree>, instrumented)
   private[this] def recordExpression(source: String, ast: String, expr: Tree) = {
     val instrumented = recordAllValues(expr)
     log(expr, s"""

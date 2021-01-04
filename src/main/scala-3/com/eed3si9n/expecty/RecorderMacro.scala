@@ -104,6 +104,7 @@ object RecorderMacro {
           }
         }
 
+        // emit recorderRuntime.recordExpression(<source>, <tree>, instrumented)
         def recordExpression(source: String, ast: String, expr: Term, loc: Term): Term = {
           val instrumented = recordAllValues(expr)
           Apply(recordExpressionSel,
