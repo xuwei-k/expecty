@@ -14,10 +14,11 @@
 
 package foo
 
+import com.eed3si9n.expecty.Expecty
 import expecty.Compat.isScala3
 
 object RenderingTest extends verify.BasicTestSuite {
-  val assert1 = com.eed3si9n.expecty.Expecty.assert
+  val assert1 = Expecty.assert
 
   test("literals") {
     outputs("""assertion failed
@@ -324,7 +325,7 @@ assert1(person.age == 43, "something something")
     }
   }
 
-  /*
+/*
   test("long string") {
     val str1 = """virtue! a fig! 'tis in ourselves that we are thus or thus.
     |our bodies are our gardens, to the which our wills are gardeners: so that
@@ -355,12 +356,13 @@ have it sterile with idleness, or manured with industry, why, the power      |  
 and corrigible authority of this lies in our wills.                          |  and corrigible authority of this lies in our wills.
       """
       ) {
-        assertEquals(str1, "virtue! " + str2, "custom message")
+        Expecty.assertEquals(str1, "virtue! " + str2)
+        // , "custom message")
       }
     } else {
       outputs(
         """assertion failed
-assertEquals(str1, "virtue! " + str2)
+Expecty.assertEquals(str1, "virtue! " + str2)
                               | |
                               | a pig! 'tis in ourselves that we are thus or thus....
                               virtue! a pig! 'tis in ourselves that we are thus or thus....
@@ -372,11 +374,11 @@ have it sterile with idleness, or manured with industry, why, the power      |  
 and corrigible authority of this lies in our wills.                          |  and corrigible authority of this lies in our wills.
       """
       ) {
-        assertEquals(str1, "virtue! " + str2)
+        Expecty.assertEquals(str1, "virtue! " + str2)
       }
     }
   }
-  */
+*/
 
   def outputs(rendering: String)(expectation: => Unit): Unit = {
     def normalize(s: String) = augmentString(s.trim()).linesIterator.toList.mkString

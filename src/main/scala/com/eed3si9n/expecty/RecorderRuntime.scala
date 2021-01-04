@@ -42,8 +42,7 @@ class RecorderRuntime[A, R](listener: RecorderListener[A, R]) {
   }
 
   def completeRecording(): R = {
-    val lastRecorded = recordedExprs.head
-    val recording = Recording(lastRecorded.value, recordedExprs)
+    val recording = Recording(recordedExprs.reverse)
     val msg = recordedMessage
     listener.recordingCompleted(recording, msg)
   }

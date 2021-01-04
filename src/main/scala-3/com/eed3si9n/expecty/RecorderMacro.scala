@@ -41,6 +41,27 @@ class RecorderMacro(using qctx0: Quotes) {
     }
   }
 
+  def apply2[A: Type, R: Type](
+      expected: Expr[A],
+      found: Expr[A],
+      message: Expr[String],
+      listener: Expr[RecorderListener[A, R]]): Expr[R] = {
+    val expectedArg: Term = expected.asTerm.underlyingArgument
+    val foundArg: Term = found.asTerm.underlyingArgument
+
+    '{
+      val recorderRuntime: RecorderRuntime[A, R] = new RecorderRuntime($listener)
+      recorderRuntime.recordMessage($message)
+      ${
+        Block(
+          recordExpressions('{ recorderRuntime }.asTerm, expectedArg) :::
+          recordExpressions('{ recorderRuntime }.asTerm, foundArg),
+          '{ recorderRuntime.completeRecording() }.asTerm
+        ).asExprOf[R]
+      }
+    }
+  }
+
   private[this] def getSourceLocation(expr: Tree) = {
     val pos = expr.pos
 
@@ -203,4 +224,21 @@ object RecorderMacro {
     val Varargs(unTraversedRecordings) = recordings
     new RecorderMacro().apply(unTraversedRecordings, '{""}, listener)
   }
+}
+
+object StringRecorderMacro {
+  /** captures a method invocation in the shape of assertEquals(expected, found). */
+  def apply[R: Type](
+      expected: Expr[String],
+      found: Expr[String],
+      listener: Expr[RecorderListener[String, R]])(using qctx: Quotes): Expr[R] =
+    new RecorderMacro().apply2[String, R](expected, found, '{""}, listener)
+
+  /** captures a method invocation in the shape of assertEquals(expected, found). */
+  def apply[R: Type](
+      expected: Expr[String],
+      found: Expr[String],
+      message: Expr[String],
+      listener: Expr[RecorderListener[String, R]])(using qctx: Quotes): Expr[R] =
+    new RecorderMacro().apply2[String, R](expected, found, message, listener)
 }

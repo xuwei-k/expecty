@@ -1,5 +1,5 @@
 /*
-* Copyright 2012 the original author or authors.
+* Copyright 2021 the original author or authors.
 *
 * Licensed under the Apache License, Version 2.0 (the "License");
 * you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@ abstract class ExpectyBase extends Recorder[Boolean, Unit] {
   class ExpectyListener extends RecorderListener[Boolean, Unit] {
     override def expressionRecorded(
         recordedExpr: RecordedExpression[Boolean], recordedMessage: Function0[String]): Unit = {
-      lazy val rendering: String = new ExpressionRenderer(showTypes).render(recordedExpr)
+      lazy val rendering: String = new ExpressionRenderer(showTypes = showTypes, shortString = false).render(recordedExpr)
       // if (printAsts) println(recordedExpr.ast + "\n")
       // if (printExprs) println(rendering)
       if (!recordedExpr.value && failEarly) {
@@ -50,7 +50,7 @@ abstract class ExpectyBase extends Recorder[Boolean, Unit] {
         val msg = recordedMessage()
 
         val rendering = failedExprs
-          .map(new ExpressionRenderer(showTypes).render)
+          .map(new ExpressionRenderer(showTypes = showTypes, shortString = false).render)
           .mkString("\n")
 
         val assertion = if (failedExprs.size > 1) "assertions" else "assertion"
@@ -67,10 +67,44 @@ abstract class ExpectyBase extends Recorder[Boolean, Unit] {
   override lazy val listener = new ExpectyListener
 }
 
+trait StringAssertEquals extends AssertEquals[Unit] {
+  class StringAssertEqualsListener extends RecorderListener[String, Unit] {
+    val showTypes: Boolean = false
+    override def recordingCompleted(recording: Recording[String], recordedMessage: Function0[String]) = {
+      recording.recordedExprs match {
+        case expected :: found :: Nil =>
+          if (expected.value == found.value) ()
+          else {
+            lazy val rendering: String = new ExpressionRenderer(showTypes = false, shortString = true).render(found)
+            val msg = recordedMessage()
+            val header =
+              "assertion failed" +
+                (if (msg == "") ""
+                 else ": " + msg)
+
+            val expectedLines = expected.value.linesIterator.toSeq
+            val foundLines = found.value.linesIterator.toSeq
+            val diff = DiffUtil
+              .mkColoredLineDiff(expectedLines, foundLines)
+              .linesIterator
+              .toSeq
+              .map(str => Console.RESET.toString + str)
+              .mkString("\n")
+            throw new AssertionError(header + "\n\n" + rendering + diff)
+          }
+        case _ => throw new RuntimeException("unexpected number of expressions " + recording)
+      }
+    }
+  }
+
+  override lazy val stringAssertEqualsListener: RecorderListener[String, Unit] =
+    new StringAssertEqualsListener
+}
+
 class Expecty() extends ExpectyBase with UnaryRecorder[Boolean, Unit]
 class VarargsExpecty() extends ExpectyBase with VarargsRecorder[Boolean, Unit]
 
-object Expecty {
+object Expecty extends StringAssertEquals {
   lazy val assert: Expecty = new Expecty()
   lazy val expect: VarargsExpecty = new VarargsExpecty()
 }
