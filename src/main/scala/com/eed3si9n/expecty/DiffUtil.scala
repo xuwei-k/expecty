@@ -96,7 +96,7 @@ object DiffUtil {
     // skip ANSI control sequence
     def textLength(str: String): Int = str.replaceAll("\u001b\\[[\\d;]*[^\\d;]", "").length
     val expectedSize = EOF.length max textLength(diffs.maxBy(diff => textLength(diff._1))._1)
-    println(expectedSize)
+
     diffs map { case (expected, found) =>
       val pad = " " * 0.max(expectedSize - textLength(expected))
       expected + pad + "  |  " + found
