@@ -13,7 +13,7 @@ jobs:
       - uses: olafurpg/setup-scala@v10
         with:
           java-version: "adopt@1.8"
-      - run: sbt ci-release
+      - name: Release
         env:
           # define Java options for both official sbt and sbt-extras
           JAVA_OPTS: -Xms2048M -Xmx2048M -Xss6M -XX:ReservedCodeCacheSize=256M -Dfile.encoding=UTF-8
@@ -23,7 +23,6 @@ jobs:
           SONATYPE_PASSWORD: ${{ secrets.SONATYPE_PASSWORD }}
           SONATYPE_USERNAME: ${{ secrets.SONATYPE_USERNAME }}
           CI_RELEASE: publishSigned
-      - name: Release
         run: |
           sudo apt-get update
           sudo apt install clang libunwind-dev libgc-dev libre2-dev
