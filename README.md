@@ -12,7 +12,7 @@ Expecty is licensed under the Apache 2 license.
 ## Setup
 
 ```scala
-libraryDependencies += "com.eed3si9n.expecty" %% "expecty" % "0.12.0" % Test
+libraryDependencies += "com.eed3si9n.expecty" %% "expecty" % "0.15.1" % Test
 ```
 
 ## Code Examples
