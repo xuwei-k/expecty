@@ -15,6 +15,7 @@
 package foo
 
 import com.eed3si9n.expecty.Expecty
+import expecty.Compat
 import expecty.Compat.isScala3
 
 object RenderingTest extends verify.BasicTestSuite {
@@ -33,7 +34,7 @@ object RenderingTest extends verify.BasicTestSuite {
   }
 
   test("List.apply") {
-    if (isScala3) {
+    if (Compat.scala == "3.0" || Compat.scala == "2.13") {
       outputs("""assertion failed
 List() == List(1, 2)
 |      |  |
@@ -59,7 +60,7 @@ List() == List(1, 2)
   }
 
   test("List.apply2") {
-    if (isScala3) {
+    if (Compat.scala == "3.0" || Compat.scala == "2.13") {
       outputs("""assertion failed
 List(1, 2) == List()
 |          |  |
