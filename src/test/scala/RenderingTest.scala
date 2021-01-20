@@ -60,7 +60,7 @@ List() == List(1, 2)
   }
 
   test("List.apply2") {
-    if (Compat.scala == "3.0" || Compat.scala == "2.13")  {
+    if (Compat.scala == "3.0" || Compat.scala == "2.13") {
       outputs("""assertion failed
 List(1, 2) == List()
 |          |  |
