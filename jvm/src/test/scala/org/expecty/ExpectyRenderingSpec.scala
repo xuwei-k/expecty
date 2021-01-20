@@ -22,8 +22,8 @@ class ExpectyRenderingSpec {
   val assert = new Expecty() // (printAsts = true)
   val expect = new VarargsExpecty
 
+  import expecty.Compat
   import expecty.Compat.isScala3
-  def isScala2_13 = scala.util.Properties.versionNumberString.startsWith("2.13.")
 
   @Test
   def literals(): Unit = {
@@ -41,7 +41,7 @@ class ExpectyRenderingSpec {
 
   @Test
   def object_apply(): Unit = {
-    if (isScala3) {
+    if (Compat.scala == "3.0" || Compat.scala == "2.13") {
       outputs("""assertion failed
 
 List() == List(1, 2)
@@ -70,7 +70,7 @@ List() == List(1, 2)
 
   @Test
   def object_apply_2(): Unit = {
-    if (isScala3) {
+    if (Compat.scala == "3.0" || Compat.scala == "2.13") {
       outputs("""assertion failed
 
 List(1, 2) == List()
