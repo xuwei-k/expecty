@@ -47,13 +47,7 @@ lazy val expecty = (projectMatrix in file("."))
     )
   )
   .jsPlatform(scalaVersions = Seq(scala213, scala212, scala211, scala3))
-  .nativePlatform(
-    scalaVersions = Seq(scala211),
-    settings = Seq(
-      bspEnabled := false,
-      Test / test := { () },
-    )
-  )
+  .nativePlatform(scalaVersions = Seq(scala211, scala212, scala213))
 
 lazy val expecty3 = expecty
   .jvm(scala3)
